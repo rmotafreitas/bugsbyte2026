@@ -18,6 +18,7 @@ import { LoginForm } from "../screens/LoginForm";
 import { Register } from "../screens/Register";
 import { Main } from "../screens/Main";
 import { Profile } from "../screens/Profile";
+import { Me } from "../screens/Me";
 
 export type AuthStackParamList = {
   login: undefined;
@@ -90,7 +91,7 @@ function AppTabNavigator() {
       />
       <AppTab.Screen
         name="profileTab"
-        component={Profile}
+        component={Me}
         options={{
           tabBarLabel: "Profile",
           tabBarIcon: ({ color, size, focused }) => {

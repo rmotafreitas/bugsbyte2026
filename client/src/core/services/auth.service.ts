@@ -7,12 +7,14 @@ import {
   UserMapper,
   UserProfileMapper,
   UserRegisterRequestMapper,
+  UserUpdateRequestMapper,
 } from "../../data/mappers/user.mapper";
 import {
   User,
   UserAuthRequest,
   UserProfile,
   UserRegisterRequest,
+  UserUpdateRequest,
 } from "../domain/user";
 
 class AuthService {
@@ -70,6 +72,14 @@ class AuthService {
       console.error("[AuthService] Failed to get profile:", error);
       return null;
     }
+  }
+
+  async updateUser(data: UserUpdateRequest): Promise<User> {
+    const dto = UserUpdateRequestMapper.toDTO(data);
+    console.log("[AuthService] Updating user profile");
+    const response = await authApi.updateUser(dto);
+    this.currentUser = UserMapper.toDomain(response);
+    return this.currentUser;
   }
 }
 

@@ -7,6 +7,7 @@ import {
   UserImageDTO,
   UserProfileDTO,
   UserRegisterRequestDTO,
+  UserUpdateRequestDTO,
 } from "./dto/user.dto";
 
 type UserResponsePayload = {
@@ -159,6 +160,63 @@ class AuthApi {
       dailyProfit: 145.2,
       totalTrades: 47,
     };
+  };
+
+  updateUser = async (dto: UserUpdateRequestDTO): Promise<UserDTO> => {
+    try {
+      console.log("[AuthApi] Updating user profile");
+
+      const formData = new FormData();
+      if (dto.name) formData.append("name", dto.name);
+      if (dto.gender) formData.append("gender", dto.gender);
+      if (dto.dateOfBirth) formData.append("dateOfBirth", dto.dateOfBirth);
+      if (dto.preferences)
+        formData.append("preferences", JSON.stringify(dto.preferences));
+
+      // Append photo files if provided
+      if (dto.photos && dto.photos.length > 0) {
+        for (const photo of dto.photos) {
+          const uri =
+            Platform.OS === "ios"
+              ? photo.uri.replace("file://", "")
+              : photo.uri;
+          const filename = uri.split("/").pop() || "photo.jpg";
+          const match = /\.(\w+)$/.exec(filename);
+          const type = match ? `image/${match[1]}` : "image/jpeg";
+
+          formData.append(`photos_${photo.width}x${photo.height}`, {
+            uri: photo.uri,
+            name: filename,
+            type,
+          } as any);
+        }
+      }
+
+      const response = await this.httpClient.client.put<UserResponsePayload>(
+        "/auth/me",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        },
+      );
+
+      console.log("[AuthApi] Update successful");
+
+      return {
+        ...response.data,
+        images: response.data.images || [],
+        dateOfCreation: response.data.dateOfCreation.split("T")[0],
+      };
+    } catch (error: any) {
+      console.error("[AuthApi] Update failed:", {
+        error: error.response?.data || error.message,
+      });
+      throw new Error(
+        error.response?.data?.error || "Update failed. Please try again.",
+      );
+    }
   };
 }
 

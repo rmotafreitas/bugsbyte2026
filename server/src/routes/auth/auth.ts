@@ -3,16 +3,7 @@ import { z } from "zod";
 import { prisma } from "../../lib/prisma";
 import crypto from "crypto";
 import { fastifyMultipart } from "@fastify/multipart";
-import path from "node:path";
-import fs from "node:fs";
-import { promisify } from "node:util";
-import { pipeline } from "node:stream";
-import { randomUUID } from "node:crypto";
-import { fileURLToPath } from "node:url";
-
-const pump = promisify(pipeline);
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { processImage } from "../../lib/image";
 
 // Simple password hashing (good enough for hackathon)
 function hashPassword(password: string): string {
@@ -49,36 +40,16 @@ export const authRoutes = async (app: FastifyInstance) => {
       height: number;
     }> = [];
 
-    const uploadDir = path.resolve(__dirname, "..", "..", "..", "uploads");
-    // Ensure uploads dir exists
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
     for await (const part of parts) {
       if (part.type === "file") {
-        // Save uploaded photo
-        const extension = path.extname(part.filename || ".jpg") || ".jpg";
-        const filename = `profile-${randomUUID()}${extension}`;
-        const filePath = path.join(uploadDir, filename);
-
-        await pump(part.file, fs.createWriteStream(filePath));
-
-        // Parse width/height from field name if encoded, otherwise use defaults
-        // Field name format: "photos" or "photos_WxH"
-        let width = 0;
-        let height = 0;
-        const sizeMatch = part.fieldname?.match(/photos_(\d+)x(\d+)/);
-        if (sizeMatch) {
-          width = parseInt(sizeMatch[1], 10);
-          height = parseInt(sizeMatch[2], 10);
+        // Collect file buffer, then crop/compress with sharp
+        const chunks: Buffer[] = [];
+        for await (const chunk of part.file) {
+          chunks.push(chunk);
         }
-
-        uploadedImages.push({
-          imageUrl: `/uploads/${filename}`,
-          width,
-          height,
-        });
+        const buffer = Buffer.concat(chunks);
+        const processed = await processImage(buffer);
+        uploadedImages.push(processed);
       } else {
         // It's a regular field
         fields[part.fieldname] = (part as any).value as string;

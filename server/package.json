@@ -6,7 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsx watch src/server.ts",
-    "start": "ts-node src/server.ts"
+    "start": "ts-node src/server.ts",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:reset": "prisma migrate reset --force"
   },
   "keywords": [],
   "author": "",
@@ -32,12 +34,14 @@
     "@fastify/swagger-ui": "^5.2.5",
     "@prisma/adapter-better-sqlite3": "^7.4.0",
     "@prisma/client": "^7.4.0",
+    "@types/sharp": "^0.31.1",
     "ai": "^6.0.86",
     "axios": "^1.5.1",
     "ccxt": "^4.5.38",
     "fastify": "^5.7.4",
     "fastify-auth0-verify": "^4.1.0",
     "jose": "^5.0.1",
+    "sharp": "^0.34.5",
     "zod": "^3.22.2"
   },
   "type": "module"

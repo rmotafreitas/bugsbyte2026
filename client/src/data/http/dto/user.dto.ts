@@ -33,6 +33,14 @@ export type UserRegisterRequestDTO = {
   photos: { uri: string; width: number; height: number }[];
 };
 
+export type UserUpdateRequestDTO = {
+  name?: string;
+  gender?: string;
+  dateOfBirth?: string;
+  preferences?: string[];
+  photos?: { uri: string; width: number; height: number }[];
+};
+
 export type UserProfileDTO = {
   totalEquity: number;
   dailyProfit: number;

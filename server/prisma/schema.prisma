@@ -27,12 +27,18 @@ model User {
 }
 
 model Product {
-  id          String @id @default(uuid())
-  name        String
-  description String
-  price       Float
-  category    String
-  imageUrl    String
+  id                  String @id @default(uuid())
+  produto             String @unique // Zara product code
+  imagem              String // Local image path: /uploads/products/...
+  nome                String
+  tamanhosDisponiveis String // JSON array stored as string
+  tipo                String
+  preco               String
+  loja                String
+  link                String
+  descricao           String
+  parteDoCorpo        String // upper, lower, overall, inner, outer
+  genero              String // masculino, feminino, unisex
 
   carts Cart[]
 }

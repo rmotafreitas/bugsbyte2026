@@ -5,6 +5,7 @@ import {
   User,
   UserAuthRequest,
   UserRegisterRequest,
+  UserUpdateRequest,
 } from "../../core/domain/user";
 import { HttpRequestError } from "../../core/errors/http.error";
 import { authService } from "../../core/services/auth.service";
@@ -16,6 +17,7 @@ interface AuthContextType {
   login: (data: UserAuthRequest) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
+  updateUser: (data: UserUpdateRequest) => Promise<boolean>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(
@@ -106,9 +108,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setUser(null);
   };
 
+  const updateUser = async (data: UserUpdateRequest) => {
+    try {
+      const updatedUser = await authService.updateUser(data);
+      setUser(updatedUser);
+      return true;
+    } catch (error) {
+      console.error("Error updating user:", error);
+      return false;
+    }
+  };
+
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, logout, refreshUser, register }}
+      value={{
+        user,
+        loading,
+        login,
+        logout,
+        refreshUser,
+        register,
+        updateUser,
+      }}
     >
       {children}
     </AuthContext.Provider>

@@ -4,12 +4,14 @@ import {
   UserAuthRequest,
   UserProfile,
   UserRegisterRequest,
+  UserUpdateRequest,
 } from "../../core/domain/user";
 import {
   UserAuthRequestDTO,
   UserDTO,
   UserProfileDTO,
   UserRegisterRequestDTO,
+  UserUpdateRequestDTO,
 } from "../http/dto/user.dto";
 
 export class UserMapper {
@@ -64,6 +66,22 @@ export class UserRegisterRequestMapper {
       dateOfBirth: domain.dateOfBirth,
       preferences: domain.preferences,
       photos: domain.photos.map((p) => ({
+        uri: p.uri,
+        width: p.width,
+        height: p.height,
+      })),
+    };
+  }
+}
+
+export class UserUpdateRequestMapper {
+  static toDTO(domain: UserUpdateRequest): UserUpdateRequestDTO {
+    return {
+      name: domain.name,
+      gender: domain.gender,
+      dateOfBirth: domain.dateOfBirth,
+      preferences: domain.preferences,
+      photos: domain.photos?.map((p) => ({
         uri: p.uri,
         width: p.width,
         height: p.height,

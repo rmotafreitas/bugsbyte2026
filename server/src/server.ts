@@ -119,7 +119,7 @@ app.register(fastifystatic, {
   prefix: "/uploads/",
 });
 
-// Start
+// Start server
 app
   .listen({
     host,

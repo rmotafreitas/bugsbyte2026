@@ -35,6 +35,14 @@ export type UserRegisterRequest = {
   photos: { uri: string; width: number; height: number }[];
 };
 
+export type UserUpdateRequest = {
+  name?: string;
+  gender?: string;
+  dateOfBirth?: string;
+  preferences?: string[];
+  photos?: { uri: string; width: number; height: number }[];
+};
+
 export type UserProfile = {
   totalEquity: number;
   dailyProfit: number;
