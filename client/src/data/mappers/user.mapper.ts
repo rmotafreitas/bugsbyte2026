@@ -15,20 +15,20 @@ import {
 export class UserMapper {
   static toDomain(dto: UserDTO): User {
     return {
-      email: dto.login,
+      id: dto.id,
+      email: dto.email,
+      username: dto.username,
       role: dto.role as Role,
-      completeName: dto.completeName,
-      birthDate: new Date(dto.birthDate),
       dateOfCreation: new Date(dto.dateOfCreation),
     };
   }
 
   static toDTO(domain: User): UserDTO {
     return {
-      login: domain.email,
+      id: domain.id,
+      email: domain.email,
+      username: domain.username,
       role: domain.role,
-      completeName: domain.completeName,
-      birthDate: domain.birthDate.toISOString().split("T")[0], // Convert to YYYY-MM-DD
       dateOfCreation: domain.dateOfCreation.toISOString().split("T")[0],
     };
   }
@@ -37,7 +37,7 @@ export class UserMapper {
 export class UserAuthRequestMapper {
   static toDTO(domain: UserAuthRequest): UserAuthRequestDTO {
     return {
-      login: domain.email,
+      email: domain.email,
       password: domain.password,
     };
   }
@@ -46,17 +46,19 @@ export class UserAuthRequestMapper {
 export class UserRegisterRequestMapper {
   static toDTO(domain: UserRegisterRequest): UserRegisterRequestDTO {
     return {
-      login: domain.email,
+      email: domain.email,
       password: domain.password,
-      role: domain.role.toLowerCase(),
-      completeName: domain.completeName,
-      birthDate: domain.birthDate.toISOString().split("T")[0], // Convert to YYYY-MM-DD
+      username: domain.username,
     };
   }
 }
 
 export class UserProfileMapper {
   static toDomain(dto: UserProfileDTO): UserProfile {
-    return {};
+    return {
+      totalEquity: dto.totalEquity,
+      dailyProfit: dto.dailyProfit,
+      totalTrades: dto.totalTrades,
+    };
   }
 }

@@ -65,6 +65,7 @@ class AxiosHttpClient {
   }
 }
 
-const { client: api } = new AxiosHttpClient();
+const httpClient = new AxiosHttpClient();
+const { client: api } = httpClient;
 
-export { api };
+export { api, AxiosHttpClient, httpClient };

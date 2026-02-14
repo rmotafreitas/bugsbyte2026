@@ -329,7 +329,6 @@ export const styles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: `${THEME.colors.card}95`,
-    backdropFilter: "blur(10px)",
     borderTopWidth: 1,
     borderTopColor: THEME.colors.border,
     padding: 16,

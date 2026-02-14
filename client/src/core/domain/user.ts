@@ -1,10 +1,10 @@
 import { Role } from "../../@types/role";
 
 export type User = {
+  id: string;
   email: string;
+  username: string;
   role: Role;
-  completeName: string;
-  birthDate: Date;
   dateOfCreation: Date;
 };
 
@@ -16,9 +16,11 @@ export type UserAuthRequest = {
 export type UserRegisterRequest = {
   email: string;
   password: string;
-  role: Role;
-  completeName: string;
-  birthDate: Date;
+  username: string;
 };
 
-export type UserProfile = {};
+export type UserProfile = {
+  totalEquity: number;
+  dailyProfit: number;
+  totalTrades: number;
+};

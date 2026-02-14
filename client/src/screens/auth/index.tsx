@@ -1,5 +1,4 @@
-import { Ionicons } from "@expo/vector-icons";
-import DateTimePicker from "@react-native-community/datetimepicker";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import React from "react";
 import {
   ActivityIndicator,
@@ -10,34 +9,22 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import DropDownPicker from "react-native-dropdown-picker";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { OCCUPATIONS } from "../../@types/occupation";
-import { Role } from "../../@types/role";
 import { THEME } from "../../constants/theme";
 import { useAuth } from "../../contexts/auth";
 import { UserAuthRequest, UserRegisterRequest } from "../../core/domain/user";
 import { HttpRequestError } from "../../core/errors/http.error";
 import { styles } from "./styles";
-import { COUNTRIES } from "../../@types/country";
 
 export function LoginScreen() {
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
+  const [username, setUsername] = React.useState("");
   const [isRegister, setIsRegister] = React.useState(false);
   const [showPassword, setShowPassword] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState("");
-  const ROLE: Role = "USER";
   const { login, register } = useAuth();
-  const [completeName, setCompleteName] = React.useState("");
-  const [birthDate, setBirthDate] = React.useState(new Date());
-  const [showDatePicker, setShowDatePicker] = React.useState(false);
-  const [occupation, setOccupation] = React.useState("");
-  const [otherOccupation, setOtherOccupation] = React.useState("");
-  const [nationality, setNationality] = React.useState("");
-  const [openOccupation, setOpenOccupation] = React.useState(false);
-  const [openNationality, setOpenNationality] = React.useState(false);
 
   const handleSubmit = async () => {
     try {
@@ -45,24 +32,25 @@ export function LoginScreen() {
       setLoading(true);
 
       if (isRegister) {
-        if (!completeName || !birthDate || !occupation || !nationality) {
+        if (!username || !email || !password) {
           throw new Error("Please fill in all fields");
         }
 
         const data: UserRegisterRequest = {
           email,
           password,
-          role: ROLE,
-          completeName,
-          birthDate,
-          occupation: occupation === "Other" ? otherOccupation : occupation,
-          nationality,
+          username,
         };
         const success = await register(data);
         if (success) {
           setIsRegister(false);
+          setError("");
         }
       } else {
+        if (!email || !password) {
+          throw new Error("Please fill in all fields");
+        }
+
         const data: UserAuthRequest = {
           email,
           password,
@@ -72,6 +60,8 @@ export function LoginScreen() {
     } catch (err) {
       if (err instanceof HttpRequestError) {
         setError(err.message || "An error occurred");
+      } else if (err instanceof Error) {
+        setError(err.message);
       } else {
         setError("An error occurred");
       }
@@ -84,99 +74,22 @@ export function LoginScreen() {
     if (!isRegister) return null;
 
     return (
-      <>
-        <View style={styles.inputContainer}>
-          <Ionicons
-            name="person"
-            size={20}
-            color={THEME.colors.mutedForeground}
-            style={styles.inputIcon}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Complete Name"
-            placeholderTextColor={THEME.colors.mutedForeground}
-            value={completeName}
-            onChangeText={setCompleteName}
-            autoCapitalize="words"
-          />
-        </View>
-
-        <TouchableOpacity
-          style={styles.datePickerButton}
-          onPress={() => setShowDatePicker(true)}
-        >
-          <Ionicons
-            name="calendar"
-            size={20}
-            color={THEME.colors.mutedForeground}
-            style={styles.inputIcon}
-          />
-          <Text style={styles.datePickerText}>
-            {birthDate.toLocaleDateString()}
-          </Text>
-        </TouchableOpacity>
-
-        {showDatePicker && (
-          <DateTimePicker
-            value={birthDate}
-            mode="date"
-            display="spinner"
-            onChange={(event, selectedDate) => {
-              setShowDatePicker(false);
-              if (selectedDate) setBirthDate(selectedDate);
-            }}
-            maximumDate={new Date()}
-          />
-        )}
-
-        <View style={[styles.dropdownContainer, { zIndex: 2000 }]}>
-          <DropDownPicker
-            open={openOccupation}
-            value={occupation}
-            items={[...OCCUPATIONS.map((occ) => ({ label: occ, value: occ }))]}
-            setOpen={setOpenOccupation}
-            setValue={setOccupation}
-            placeholder="Select Occupation"
-            style={styles.dropdown}
-            textStyle={styles.dropdownText}
-            zIndex={2000}
-            zIndexInverse={1000}
-            listMode="SCROLLVIEW"
-          />
-        </View>
-
-        {occupation === "Other" && (
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Specify Occupation"
-              placeholderTextColor={THEME.colors.mutedForeground}
-              value={otherOccupation}
-              onChangeText={setOtherOccupation}
-            />
-          </View>
-        )}
-
-        <View style={[styles.dropdownContainer, { zIndex: 1000 }]}>
-          <DropDownPicker
-            open={openNationality}
-            value={nationality}
-            items={COUNTRIES.map((country) => ({
-              label: `${country.flag} ${country.name}`,
-              value: country.code,
-            }))}
-            setOpen={setOpenNationality}
-            setValue={setNationality}
-            placeholder="Select Nationality"
-            style={styles.dropdown}
-            textStyle={styles.dropdownText}
-            zIndex={2000}
-            zIndexInverse={3000}
-            listMode="SCROLLVIEW"
-          />
-        </View>
-      </>
+      <View style={styles.inputContainer}>
+        <Ionicons
+          name="person"
+          size={20}
+          color={THEME.colors.mutedForeground}
+          style={styles.inputIcon}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Username"
+          placeholderTextColor={THEME.colors.mutedForeground}
+          value={username}
+          onChangeText={setUsername}
+          autoCapitalize="none"
+        />
+      </View>
     );
   };
 
@@ -189,19 +102,23 @@ export function LoginScreen() {
         enableAutomaticScroll={Platform.OS === "ios"}
         keyboardShouldPersistTaps="handled"
         extraHeight={150}
-        scrollEnabled={!openOccupation && !openNationality}
       >
         <View style={styles.header}>
-          <Ionicons
-            name="person-circle"
-            size={80}
-            color={THEME.colors.primary}
-          />
+          <View style={styles.logoContainer}>
+            <MaterialCommunityIcons
+              name="flash"
+              size={60}
+              color={THEME.colors.primary}
+            />
+          </View>
+          <Text style={styles.appName}>SPREAD HUNTERS</Text>
           <Text style={styles.title}>
-            {isRegister ? "Create Account" : "Welcome Back"}
+            {isRegister ? "Create Your Account" : "Welcome Back"}
           </Text>
           <Text style={styles.subtitle}>
-            {isRegister ? "Sign up to get started" : "Sign in to continue"}
+            {isRegister
+              ? "Start hunting for arbitrage opportunities"
+              : "Sign in to your trading dashboard"}
           </Text>
         </View>
 
@@ -217,6 +134,8 @@ export function LoginScreen() {
         ) : null}
 
         <View style={styles.form}>
+          {renderRegisterFields()}
+
           <View style={styles.inputContainer}>
             <Ionicons
               name="mail"
@@ -264,14 +183,6 @@ export function LoginScreen() {
             </TouchableOpacity>
           </View>
 
-          {renderRegisterFields()}
-
-          {!isRegister && (
-            <TouchableOpacity style={styles.forgotPassword}>
-              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-            </TouchableOpacity>
-          )}
-
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}
             onPress={handleSubmit}
@@ -280,26 +191,81 @@ export function LoginScreen() {
             {loading ? (
               <ActivityIndicator color={THEME.colors.primaryForeground} />
             ) : (
-              <Text style={styles.buttonText}>
-                {isRegister ? "Create Account" : "Sign In"}
-              </Text>
+              <>
+                <Text style={styles.buttonText}>
+                  {isRegister ? "Create Account" : "Sign In"}
+                </Text>
+                <MaterialCommunityIcons
+                  name="arrow-right"
+                  size={20}
+                  color={THEME.colors.primaryForeground}
+                  style={{ marginLeft: 8 }}
+                />
+              </>
             )}
           </TouchableOpacity>
+
+          {!isRegister && (
+            <View style={styles.demoContainer}>
+              <Ionicons
+                name="information-circle"
+                size={16}
+                color={THEME.colors.secondary}
+              />
+              <Text style={styles.demoText}>
+                Demo: trader@spreadhunters.com / demo123
+              </Text>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.divider}>
+          <View style={styles.dividerLine} />
         </View>
 
         <TouchableOpacity
           style={styles.switchAuth}
-          onPress={() => setIsRegister(!isRegister)}
+          onPress={() => {
+            setIsRegister(!isRegister);
+            setError("");
+          }}
         >
           <Text style={styles.switchAuthText}>
             {isRegister
-              ? "Already have an account? "
-              : "Don't have an account? "}
+              ? "Already hunting spreads? "
+              : "New to spread hunting? "}
             <Text style={styles.switchAuthTextHighlight}>
-              {isRegister ? "Sign In" : "Sign Up"}
+              {isRegister ? "Sign In" : "Create Account"}
             </Text>
           </Text>
         </TouchableOpacity>
+
+        <View style={styles.footer}>
+          <View style={styles.featureItem}>
+            <MaterialCommunityIcons
+              name="lightning-bolt"
+              size={20}
+              color={THEME.colors.primary}
+            />
+            <Text style={styles.featureText}>Real-time Arbitrage</Text>
+          </View>
+          <View style={styles.featureItem}>
+            <MaterialCommunityIcons
+              name="shield-check"
+              size={20}
+              color={THEME.colors.primary}
+            />
+            <Text style={styles.featureText}>Secure Trading</Text>
+          </View>
+          <View style={styles.featureItem}>
+            <MaterialCommunityIcons
+              name="clock-fast"
+              size={20}
+              color={THEME.colors.primary}
+            />
+            <Text style={styles.featureText}>45ms Latency</Text>
+          </View>
+        </View>
       </KeyboardAwareScrollView>
     </SafeAreaView>
   );

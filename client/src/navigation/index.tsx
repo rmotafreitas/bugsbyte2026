@@ -44,7 +44,7 @@ const ProfileButton = ({
   >
     <View style={styles.profileAvatar}>
       <Text style={styles.profileAvatarText}>
-        {user?.completeName?.[0]?.toUpperCase()}
+        {user?.username?.[0]?.toUpperCase()}
       </Text>
     </View>
   </TouchableOpacity>
@@ -147,7 +147,6 @@ export function AppNavigator() {
         headerTitleStyle: {
           fontWeight: "700",
           fontSize: 18,
-          letterSpacing: 0.3,
         },
         headerShadowVisible: false,
         animation: Platform.OS === "ios" ? "slide_from_bottom" : "fade",
@@ -239,7 +238,6 @@ const styles = StyleSheet.create({
     color: THEME.colors.foreground,
     fontSize: 18,
     fontWeight: "700",
-    letterSpacing: 0.3,
   },
   modalCloseButton: {
     marginLeft: 16,

@@ -33,24 +33,27 @@ class AuthService {
   async register(data: UserRegisterRequest): Promise<boolean> {
     try {
       const dto = UserRegisterRequestMapper.toDTO(data);
-      console.log("Logging DTO in register method");
-      console.log({ dto });
-      await authApi.register(dto);
-    } catch {
+      console.log("[AuthService] Registering user:", dto.email);
+      const response = await authApi.register(dto);
+      console.log("[AuthService] Registration successful, got token");
+      // Store user info for immediate use after registration
+      this.currentUser = UserMapper.toDomain(response.user);
+      return true;
+    } catch (error) {
+      console.error("[AuthService] Registration failed:", error);
       return false;
     }
-    return true;
   }
 
   async login(data: UserAuthRequest): Promise<JwtTokenValue> {
     const dto = UserAuthRequestMapper.toDTO(data);
-    console.log("Logging DTO in login method");
-    console.log({ dto });
-    const res = await authApi.login(dto);
-    console.log("Logging response in login method");
-    console.log({ res });
-    const jwtTokenValue = JwtTokenValueMapper.getJwtTokenValue(res);
-    return jwtTokenValue;
+    console.log("[AuthService] Logging in:", dto.email);
+    const response = await authApi.login(dto);
+    console.log("[AuthService] Login successful, got token");
+    // Store user info
+    this.currentUser = UserMapper.toDomain(response.user);
+    // Return just the token string
+    return response.token;
   }
 
   logout() {
@@ -71,11 +74,6 @@ class AuthService {
       console.error("[AuthService] Failed to get profile:", error);
       return null;
     }
-  }
-
-  async getPdfCompleteUrl(): Promise<string> {
-    const res = await authApi.getPdfCompleteUrl();
-    return CONFIG.API.BASE_URL + "/static" + res;
   }
 }
 

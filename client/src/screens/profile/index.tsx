@@ -1,32 +1,269 @@
-// import React, { useState } from "react";
-// import {
-//   Text,
-//   View,
-//   SafeAreaView,
-//   TouchableOpacity,
-//   ScrollView,
-//   Dimensions,
-// } from "react-native";
-// import { RadarChart } from "@salmonco/react-native-radar-chart";
-// import Modal from "react-native-modal";
-// import { Ionicons } from "@expo/vector-icons";
-// import { useAuth } from "../../contexts/auth";
-// import { styles } from "./styles";
-// import { THEME } from "../../constants/theme";
-// import { COUNTRIES } from "../../@types/country";
-// import { useFocusEffect } from "@react-navigation/native";
-// import { authService } from "../../core/services/auth.service";
-// import { UserProfile } from "../../core/domain/user";
-// import { LoadingSpinner } from "../../components/loading-spinner";
-// import {
-//   EnneagramSkeleton,
-//   EvaluationSkeleton,
-// } from "../../components/profile-skeletons";
-// import * as WebBrowser from "expo-web-browser";
-// import { chatService } from "../../core/services/chat.service";
+import React, { useState } from "react";
+import {
+  Text,
+  View,
+  SafeAreaView,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+} from "react-native";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useAuth } from "../../contexts/auth";
+import { styles } from "./styles";
+import { THEME } from "../../constants/theme";
+import { useFocusEffect } from "@react-navigation/native";
+import { authService } from "../../core/services/auth.service";
+import { UserProfile } from "../../core/domain/user";
+import { LoadingSpinner } from "../../components/loading-spinner";
 
-// export function ProfileScreen() {
-//   const { user, logout } = useAuth();
+export function ProfileScreen() {
+  const { user, logout } = useAuth();
+  const [isFetching, setIsFetching] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  const fetchProfile = async () => {
+    try {
+      setError(null);
+      setIsFetching(true);
+      const res = await authService.getProfile();
+      if (res) setProfile(res);
+    } catch (error) {
+      setError("Failed to load profile data");
+      console.error("Failed to fetch profile:", error);
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchProfile();
+    }, []),
+  );
+
+  const handleLogout = () => {
+    Alert.alert("Logout", "Are you sure you want to logout?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: logout,
+      },
+    ]);
+  };
+
+  if (!user) return null;
+
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* USER HEADER */}
+        <View style={styles.header}>
+          <View style={styles.avatarContainer}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>
+                {user.username.charAt(0).toUpperCase()}
+              </Text>
+            </View>
+            <View style={styles.statusBadge}>
+              <View style={styles.statusDot} />
+            </View>
+          </View>
+          <Text style={styles.username}>@{user.username}</Text>
+          <Text style={styles.email}>{user.email}</Text>
+          <View style={styles.memberBadge}>
+            <Ionicons
+              name="shield-checkmark"
+              size={14}
+              color={THEME.colors.primary}
+            />
+            <Text style={styles.memberText}>Verified Trader</Text>
+          </View>
+        </View>
+
+        {isFetching ? (
+          <LoadingSpinner />
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <Ionicons
+              name="alert-circle"
+              size={32}
+              color={THEME.colors.destructive}
+            />
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity style={styles.retryButton} onPress={fetchProfile}>
+              <Text style={styles.retryText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <>
+            {/* TRADING STATS */}
+            <View style={styles.statsContainer}>
+              <Text style={styles.sectionTitle}>Trading Performance</Text>
+              <View style={styles.statsGrid}>
+                <View style={styles.statCard}>
+                  <View style={styles.statIconContainer}>
+                    <MaterialCommunityIcons
+                      name="wallet"
+                      size={24}
+                      color={THEME.colors.primary}
+                    />
+                  </View>
+                  <Text style={styles.statValue}>
+                    €{profile?.totalEquity.toLocaleString()}
+                  </Text>
+                  <Text style={styles.statLabel}>Total Equity</Text>
+                </View>
+
+                <View style={styles.statCard}>
+                  <View style={styles.statIconContainer}>
+                    <MaterialCommunityIcons
+                      name="trending-up"
+                      size={24}
+                      color={THEME.colors.primary}
+                    />
+                  </View>
+                  <Text
+                    style={[styles.statValue, { color: THEME.colors.primary }]}
+                  >
+                    +€{profile?.dailyProfit.toFixed(2)}
+                  </Text>
+                  <Text style={styles.statLabel}>Daily Profit</Text>
+                </View>
+
+                <View style={styles.statCard}>
+                  <View style={styles.statIconContainer}>
+                    <MaterialCommunityIcons
+                      name="chart-line"
+                      size={24}
+                      color={THEME.colors.secondary}
+                    />
+                  </View>
+                  <Text style={styles.statValue}>{profile?.totalTrades}</Text>
+                  <Text style={styles.statLabel}>Total Trades</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* ACCOUNT INFO */}
+            <View style={styles.infoCard}>
+              <View style={styles.infoHeader}>
+                <Ionicons
+                  name="person"
+                  size={20}
+                  color={THEME.colors.primary}
+                />
+                <Text style={styles.infoTitle}>Account Information</Text>
+              </View>
+
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>User ID</Text>
+                <Text style={styles.infoValue}>{user.id}</Text>
+              </View>
+
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Email</Text>
+                <Text style={styles.infoValue}>{user.email}</Text>
+              </View>
+
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Account Type</Text>
+                <View style={styles.roleBadge}>
+                  <Text style={styles.roleText}>{user.role}</Text>
+                </View>
+              </View>
+
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Member Since</Text>
+                <Text style={styles.infoValue}>
+                  {formatDate(user.dateOfCreation)}
+                </Text>
+              </View>
+            </View>
+
+            {/* SETTINGS */}
+            <View style={styles.settingsCard}>
+              <Text style={styles.sectionTitle}>Settings</Text>
+
+              <TouchableOpacity style={styles.settingItem}>
+                <View style={styles.settingLeft}>
+                  <Ionicons
+                    name="shield-checkmark"
+                    size={20}
+                    color={THEME.colors.foreground}
+                  />
+                  <Text style={styles.settingText}>Security</Text>
+                </View>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={THEME.colors.mutedForeground}
+                />
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.settingItem}>
+                <View style={styles.settingLeft}>
+                  <Ionicons
+                    name="notifications"
+                    size={20}
+                    color={THEME.colors.foreground}
+                  />
+                  <Text style={styles.settingText}>Notifications</Text>
+                </View>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={THEME.colors.mutedForeground}
+                />
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.settingItem}>
+                <View style={styles.settingLeft}>
+                  <Ionicons
+                    name="help-circle"
+                    size={20}
+                    color={THEME.colors.foreground}
+                  />
+                  <Text style={styles.settingText}>Help & Support</Text>
+                </View>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={THEME.colors.mutedForeground}
+                />
+              </TouchableOpacity>
+            </View>
+
+            {/* LOGOUT BUTTON */}
+            <TouchableOpacity
+              style={styles.logoutButton}
+              onPress={handleLogout}
+            >
+              <Ionicons
+                name="log-out"
+                size={20}
+                color={THEME.colors.destructive}
+              />
+              <Text style={styles.logoutText}>Logout</Text>
+            </TouchableOpacity>
+          </>
+        )}
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
 //   const [selectedTrait, setSelectedTrait] = useState<any>(null);
 //   const [showEnneagramModal, setShowEnneagramModal] = useState(false);
 //   const screenWidth = Dimensions.get("window").width;

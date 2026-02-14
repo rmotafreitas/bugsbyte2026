@@ -1,22 +1,24 @@
 export type UserDTO = {
-  login: string;
+  id: string;
+  email: string;
+  username: string;
   role: string;
-  completeName: string;
-  birthDate: string; // format: yyyy-MM-dd
   dateOfCreation: string; // format: yyyy-MM-dd
 };
 
 export type UserAuthRequestDTO = {
-  login: string;
+  email: string;
   password: string;
 };
 
 export type UserRegisterRequestDTO = {
-  login: string;
+  email: string;
   password: string;
-  role: string;
-  completeName: string;
-  birthDate: string; // format: yyyy-MM-dd
+  username: string;
 };
 
-export type UserProfileDTO = {};
+export type UserProfileDTO = {
+  totalEquity: number;
+  dailyProfit: number;
+  totalTrades: number;
+};
