@@ -18,6 +18,11 @@ export class UserMapper {
       id: dto.id,
       email: dto.email,
       username: dto.username,
+      name: dto.name || "",
+      gender: dto.gender || "",
+      dateOfBirth: dto.dateOfBirth || "",
+      preferences: dto.preferences || [],
+      images: dto.images || [],
       role: dto.role as Role,
       dateOfCreation: new Date(dto.dateOfCreation),
     };
@@ -28,6 +33,11 @@ export class UserMapper {
       id: domain.id,
       email: domain.email,
       username: domain.username,
+      name: domain.name,
+      gender: domain.gender,
+      dateOfBirth: domain.dateOfBirth,
+      preferences: domain.preferences,
+      images: domain.images,
       role: domain.role,
       dateOfCreation: domain.dateOfCreation.toISOString().split("T")[0],
     };
@@ -49,6 +59,15 @@ export class UserRegisterRequestMapper {
       email: domain.email,
       password: domain.password,
       username: domain.username,
+      name: domain.name,
+      gender: domain.gender,
+      dateOfBirth: domain.dateOfBirth,
+      preferences: domain.preferences,
+      photos: domain.photos.map((p) => ({
+        uri: p.uri,
+        width: p.width,
+        height: p.height,
+      })),
     };
   }
 }

@@ -7,6 +7,7 @@ import {
   ScrollView,
   Alert,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -20,15 +21,21 @@ import { styles } from "./styles";
 
 export function Register() {
   const navigation = useNavigation();
-  const { login } = useAuth();
+  const { register } = useAuth();
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
-  const [photos, setPhotos] = useState<string[]>([]);
+  const [photos, setPhotos] = useState<
+    { uri: string; width: number; height: number }[]
+  >([]);
   const [gender, setGender] = useState("");
   const [birthDay, setBirthDay] = useState("");
   const [birthMonth, setBirthMonth] = useState("");
   const [birthYear, setBirthYear] = useState("");
   const [preferences, setPreferences] = useState<string[]>([]);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const pickImage = async (index: number) => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -43,13 +50,19 @@ export function Register() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [3, 4],
+      aspect: [3, 4] as [number, number],
       quality: 0.8,
+      allowsMultipleSelection: false,
     });
 
     if (!result.canceled && result.assets[0]) {
+      const asset = result.assets[0];
       const newPhotos = [...photos];
-      newPhotos[index] = result.assets[0].uri;
+      newPhotos[index] = {
+        uri: asset.uri,
+        width: asset.width,
+        height: asset.height,
+      };
       setPhotos(newPhotos);
     }
   };
@@ -81,21 +94,48 @@ export function Register() {
         );
       case 4:
         return preferences.length >= 1;
+      case 5:
+        return (
+          email.trim().length > 0 &&
+          password.trim().length >= 4 &&
+          password === confirmPassword
+        );
       default:
         return false;
     }
   };
 
   const handleNext = async () => {
-    if (step < 4) {
+    if (step < 5) {
       setStep(step + 1);
     } else {
-      // Registration complete — navigate automatically via auth state change
-      // Mock registration for testing
-      await login({
-        email: "test@example.com",
-        password: "password123",
-      });
+      // Final step — submit registration
+      setLoading(true);
+      try {
+        const dateOfBirth = `${birthDay.padStart(2, "0")}/${birthMonth.padStart(2, "0")}/${birthYear}`;
+        const success = await register({
+          email: email.trim(),
+          password: password.trim(),
+          username: name.trim().toLowerCase().replace(/\s+/g, "_"),
+          name: name.trim(),
+          gender,
+          dateOfBirth,
+          preferences,
+          photos: photos.filter(Boolean),
+        });
+        if (!success) {
+          Alert.alert(
+            "Registration Failed",
+            "Could not create your account. The email may already be in use.",
+          );
+        }
+        // On success, auth state changes and navigation happens automatically
+      } catch (error) {
+        console.error("Registration error:", error);
+        Alert.alert("Error", "Something went wrong. Please try again.");
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -129,7 +169,7 @@ export function Register() {
             {photos[index] ? (
               <View style={styles.photoContainer}>
                 <Image
-                  source={{ uri: photos[index] }}
+                  source={{ uri: photos[index].uri }}
                   style={styles.photoImage}
                 />
                 <View style={styles.photoRemove}>
@@ -269,12 +309,74 @@ export function Register() {
     </View>
   );
 
+  const renderAccountStep = () => (
+    <View style={styles.stepContent}>
+      <Text style={styles.stepTitle}>Create account</Text>
+      <Text style={styles.stepSubtitle}>
+        Enter your email and choose a password.
+      </Text>
+      <View style={styles.accountForm}>
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Email</Text>
+          <TextInput
+            style={styles.formInput}
+            placeholder="your@email.com"
+            placeholderTextColor={THEME.COLORS.CAPTION_400}
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            autoComplete="email"
+            keyboardType="email-address"
+            editable={!loading}
+          />
+        </View>
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Password</Text>
+          <TextInput
+            style={styles.formInput}
+            placeholder="Min. 4 characters"
+            placeholderTextColor={THEME.COLORS.CAPTION_400}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            autoCapitalize="none"
+            editable={!loading}
+          />
+        </View>
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Confirm password</Text>
+          <TextInput
+            style={[
+              styles.formInput,
+              confirmPassword.length > 0 &&
+                password !== confirmPassword &&
+                styles.formInputError,
+            ]}
+            placeholder="Re-enter your password"
+            placeholderTextColor={THEME.COLORS.CAPTION_400}
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry
+            autoCapitalize="none"
+            editable={!loading}
+          />
+          {confirmPassword.length > 0 && password !== confirmPassword && (
+            <Text style={styles.errorText}>Passwords don't match</Text>
+          )}
+        </View>
+      </View>
+    </View>
+  );
+
+  const TOTAL_STEPS = 6;
+
   const steps = [
     renderPhotosStep,
     renderNameStep,
     renderGenderStep,
     renderBirthdayStep,
     renderPreferencesStep,
+    renderAccountStep,
   ];
 
   return (
@@ -296,7 +398,7 @@ export function Register() {
 
         {/* Progress bar */}
         <View style={styles.progressContainer}>
-          {Array.from({ length: 5 }).map((_, i) => (
+          {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
             <View
               key={i}
               style={[
@@ -322,20 +424,24 @@ export function Register() {
           <TouchableOpacity
             style={[
               styles.continueButton,
-              !canProceed() && styles.continueButtonDisabled,
+              (!canProceed() || loading) && styles.continueButtonDisabled,
             ]}
             onPress={handleNext}
-            disabled={!canProceed()}
+            disabled={!canProceed() || loading}
             activeOpacity={0.8}
           >
-            <Text
-              style={[
-                styles.continueButtonText,
-                !canProceed() && styles.continueButtonTextDisabled,
-              ]}
-            >
-              {step === 4 ? "GET STARTED" : "CONTINUE"}
-            </Text>
+            {loading ? (
+              <ActivityIndicator color={THEME.COLORS.WHITE_TEXT} />
+            ) : (
+              <Text
+                style={[
+                  styles.continueButtonText,
+                  !canProceed() && styles.continueButtonTextDisabled,
+                ]}
+              >
+                {step === TOTAL_STEPS - 1 ? "GET STARTED" : "CONTINUE"}
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
       </SafeAreaView>

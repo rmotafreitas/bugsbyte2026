@@ -12,7 +12,6 @@ import { updateUserRoute } from "./routes/auth/update";
 import { logoutUserRoute } from "./routes/auth/logout";
 import { registerSwagger } from "./lib/swagger";
 import { cartRoutes } from "./routes/cart/cart.route";
-import { tryOnRoute } from "./routes/generate_images/genereate_images.route";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -113,8 +112,6 @@ app.register(meUserRoute);
 app.register(updateUserRoute);
 app.register(logoutUserRoute);
 app.register(cartRoutes);
-app.register(tryOnRoute)
-
 
 // Static files
 app.register(fastifystatic, {
@@ -129,42 +126,7 @@ app
     port: Number(process.env.PORT) || 3000,
   })
   .then((address) => {
-    // console.log(`Spread Hunters API listening on ${address}`);
-    // console.log(`   📖 Swagger Docs: ${address}/docs`);
-    // console.log(`   GET  ${address}/ping`);
-    // console.log(`   POST ${address}/auth/register`);
-    // console.log(`   POST ${address}/auth/login`);
-    // console.log(`   GET  ${address}/auth/me`);
-    // console.log(`   GET  ${address}/secure`);
-    // console.log(`\n   🏦 Exchange Info (public):`);
-    // console.log(`   GET  ${address}/api/exchanges`);
-    // console.log(`   GET  ${address}/api/exchanges/:exchangeId`);
-    // console.log(`   GET  ${address}/api/exchanges/:exchangeId/fees`);
-    // console.log(`\n   📈 Arbitrage (ticker):`);
-    // console.log(`   GET  ${address}/api/arbitrage/btc`);
-    // console.log(`   GET  ${address}/api/arbitrage/exchanges`);
-    // console.log(`\n   � Balance / Wallet:`);
-    // console.log(`   GET  ${address}/api/balance`);
-    // console.log(`   POST ${address}/api/balance/deposit`);
-    // console.log(`   POST ${address}/api/balance/withdraw`);
-    // console.log(`   GET  ${address}/api/balance/transactions`);
-    // console.log(`   GET  ${address}/api/balance/trades`);
-    // console.log(`   POST ${address}/api/balance/trade`);
-    // console.log(`\n   �📊 Order Book Arbitrage (Spread Hunters):`);
-    // console.log(`   GET  ${address}/api/orderbook-arbitrage/analyze`);
-    // console.log(
-    //   `   GET  ${address}/api/orderbook-arbitrage/spreads     🔥 FAST SPREAD SCANNER`,
-    // );
-    // console.log(
-    //   `   GET  ${address}/api/orderbook-arbitrage/scan        ⭐ MULTI-SYMBOL SCANNER`,
-    // );
-    // console.log(
-    //   `   GET  ${address}/api/orderbook-arbitrage/coins       📋 Recommended coins`,
-    // );
-    // console.log(`   POST ${address}/api/orderbook-arbitrage/simulate`);
-    // console.log(`   GET  ${address}/api/orderbook-arbitrage/history`);
-    // console.log(`   GET  ${address}/api/orderbook-arbitrage/pl-summary`);
-    // console.log(
-    //   `   GET  ${address}/api/orderbook-arbitrage/orderbook/:exchange`,
-    // );
+    console.log(`Server running at ${address}`);
+    console.log("Registered routes:");
+    app.printRoutes();
   });

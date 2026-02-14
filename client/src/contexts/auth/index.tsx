@@ -64,8 +64,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const register = async (data: UserRegisterRequest) => {
     try {
       await logout();
-      const res = await authService.register(data);
-      return res;
+      const { token, user } = await authService.register(data);
+      const cookieName = CONFIG.APP.STORAGE_COOKIE_NAME;
+      await AsyncStorage.setItem(cookieName, token);
+      setUser(user);
+      return true;
     } catch (error) {
       if (error instanceof HttpRequestError) {
         console.error("Custom Http Request Error registering:", error);

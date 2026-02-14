@@ -15,47 +15,35 @@ model User {
   email          String   @unique
   username       String   @unique
   password       String
+  name           String   @default("")
+  gender         String   @default("")
+  dateOfBirth    String   @default("")
+  preferences    String   @default("") // JSON array stored as string
+  images         String   @default("") // JSON array: [{imageUrl, width, height}]
   role           String   @default("user")
-  dateOfCreation DateTime @default(now())  
-  images         Image[]
+  dateOfCreation DateTime @default(now())
 
   carts Cart[]
 }
 
-
 model Product {
-  id          String   @id @default(uuid())
+  id          String @id @default(uuid())
   name        String
   description String
   price       Float
   category    String
   imageUrl    String
 
-
   carts Cart[]
 }
 
-
-model Cart{
-  id        String   @id @default(uuid())
-  user_id   String
-  user      User     @relation(fields: [user_id], references: [id])
+model Cart {
+  id         String  @id @default(uuid())
+  user_id    String
+  user       User    @relation(fields: [user_id], references: [id])
   product_id String
-  product   Product  @relation(fields: [product_id], references: [id])
-  quantity  Int      @default(1)
-  
+  product    Product @relation(fields: [product_id], references: [id])
+  quantity   Int     @default(1)
+
   @@index([user_id, product_id])
 }
-
-
-model Image {
-  id       String   @id @default(uuid())
-  user_id  String
-  user     User     @relation(fields: [user_id], references: [id])
-  url      String   // Could be URL or base64 - consider splitting
-  type     String   @default("url") // "url" | "base64"
-  
-  @@index([user_id])
-}
-
-

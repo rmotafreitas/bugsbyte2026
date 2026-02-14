@@ -16,6 +16,11 @@ export const meUserRoute = async (app: FastifyInstance) => {
           id: true,
           email: true,
           username: true,
+          name: true,
+          gender: true,
+          dateOfBirth: true,
+          preferences: true,
+          images: true,
           role: true,
           dateOfCreation: true,
         },
@@ -27,7 +32,22 @@ export const meUserRoute = async (app: FastifyInstance) => {
         });
       }
 
-      return reply.send(user);
+      let parsedImages: Array<{
+        imageUrl: string;
+        width: number;
+        height: number;
+      }> = [];
+      try {
+        parsedImages = JSON.parse(user.images || "[]");
+      } catch {
+        parsedImages = [];
+      }
+
+      return reply.send({
+        ...user,
+        preferences: JSON.parse(user.preferences || "[]"),
+        images: parsedImages,
+      });
     },
   );
 };

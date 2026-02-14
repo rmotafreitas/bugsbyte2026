@@ -2,22 +2,107 @@ import { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { prisma } from "../../lib/prisma";
 import crypto from "crypto";
+import { fastifyMultipart } from "@fastify/multipart";
+import path from "node:path";
+import fs from "node:fs";
+import { promisify } from "node:util";
+import { pipeline } from "node:stream";
+import { randomUUID } from "node:crypto";
+import { fileURLToPath } from "node:url";
+
+const pump = promisify(pipeline);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Simple password hashing (good enough for hackathon)
 function hashPassword(password: string): string {
   return crypto.createHash("sha256").update(password).digest("hex");
 }
 
+function parseUserImages(
+  imagesStr: string,
+): Array<{ imageUrl: string; width: number; height: number }> {
+  try {
+    return JSON.parse(imagesStr || "[]");
+  } catch {
+    return [];
+  }
+}
+
 export const authRoutes = async (app: FastifyInstance) => {
-  // ===== REGISTER =====
+  // Register multipart support for this scope
+  app.register(fastifyMultipart, {
+    limits: {
+      fileSize: 1_048_576 * 10, // 10MB per file
+      files: 6,
+    },
+    attachFieldsToBody: false,
+  });
+
+  // ===== REGISTER (multipart) =====
   app.post("/auth/register", async (request, reply) => {
+    const parts = request.parts();
+    const fields: Record<string, string> = {};
+    const uploadedImages: Array<{
+      imageUrl: string;
+      width: number;
+      height: number;
+    }> = [];
+
+    const uploadDir = path.resolve(__dirname, "..", "..", "..", "uploads");
+    // Ensure uploads dir exists
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    for await (const part of parts) {
+      if (part.type === "file") {
+        // Save uploaded photo
+        const extension = path.extname(part.filename || ".jpg") || ".jpg";
+        const filename = `profile-${randomUUID()}${extension}`;
+        const filePath = path.join(uploadDir, filename);
+
+        await pump(part.file, fs.createWriteStream(filePath));
+
+        // Parse width/height from field name if encoded, otherwise use defaults
+        // Field name format: "photos" or "photos_WxH"
+        let width = 0;
+        let height = 0;
+        const sizeMatch = part.fieldname?.match(/photos_(\d+)x(\d+)/);
+        if (sizeMatch) {
+          width = parseInt(sizeMatch[1], 10);
+          height = parseInt(sizeMatch[2], 10);
+        }
+
+        uploadedImages.push({
+          imageUrl: `/uploads/${filename}`,
+          width,
+          height,
+        });
+      } else {
+        // It's a regular field
+        fields[part.fieldname] = (part as any).value as string;
+      }
+    }
+
+    // Parse preferences from JSON string
+    let preferences: string[] = [];
+    try {
+      preferences = JSON.parse(fields.preferences || "[]");
+    } catch {
+      preferences = [];
+    }
+
     const bodySchema = z.object({
       email: z.string().email(),
       password: z.string().min(4),
       username: z.string().min(2),
+      name: z.string().min(1),
+      gender: z.string().min(1),
+      dateOfBirth: z.string().min(1),
     });
 
-    const parsed = bodySchema.safeParse(request.body);
+    const parsed = bodySchema.safeParse(fields);
     if (!parsed.success) {
       return reply.status(400).send({
         error: "Invalid request body",
@@ -25,7 +110,14 @@ export const authRoutes = async (app: FastifyInstance) => {
       });
     }
 
-    const { email, password, username } = parsed.data;
+    if (preferences.length < 1) {
+      return reply.status(400).send({
+        error: "At least 1 style preference is required",
+      });
+    }
+
+    const { email, password, username, name, gender, dateOfBirth } =
+      parsed.data;
 
     // Check if user already exists
     const existingUser = await prisma.user.findFirst({
@@ -46,6 +138,11 @@ export const authRoutes = async (app: FastifyInstance) => {
         email,
         username,
         password: hashPassword(password),
+        name,
+        gender,
+        dateOfBirth,
+        preferences: JSON.stringify(preferences),
+        images: JSON.stringify(uploadedImages),
       },
     });
 
@@ -67,6 +164,11 @@ export const authRoutes = async (app: FastifyInstance) => {
         id: user.id,
         email: user.email,
         username: user.username,
+        name: user.name,
+        gender: user.gender,
+        dateOfBirth: user.dateOfBirth,
+        preferences: JSON.parse(user.preferences || "[]"),
+        images: parseUserImages(user.images),
         role: user.role,
         dateOfCreation: user.dateOfCreation,
       },
@@ -116,6 +218,11 @@ export const authRoutes = async (app: FastifyInstance) => {
         id: user.id,
         email: user.email,
         username: user.username,
+        name: user.name,
+        gender: user.gender,
+        dateOfBirth: user.dateOfBirth,
+        preferences: JSON.parse(user.preferences || "[]"),
+        images: parseUserImages(user.images),
         role: user.role,
         dateOfCreation: user.dateOfCreation,
       },

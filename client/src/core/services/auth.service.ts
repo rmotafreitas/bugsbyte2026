@@ -30,19 +30,15 @@ class AuthService {
     }
   }
 
-  async register(data: UserRegisterRequest): Promise<boolean> {
-    try {
-      const dto = UserRegisterRequestMapper.toDTO(data);
-      console.log("[AuthService] Registering user:", dto.email);
-      const response = await authApi.register(dto);
-      console.log("[AuthService] Registration successful, got token");
-      // Store user info for immediate use after registration
-      this.currentUser = UserMapper.toDomain(response.user);
-      return true;
-    } catch (error) {
-      console.error("[AuthService] Registration failed:", error);
-      return false;
-    }
+  async register(
+    data: UserRegisterRequest,
+  ): Promise<{ token: JwtTokenValue; user: User }> {
+    const dto = UserRegisterRequestMapper.toDTO(data);
+    console.log("[AuthService] Registering user:", dto.email);
+    const response = await authApi.register(dto);
+    console.log("[AuthService] Registration successful, got token");
+    this.currentUser = UserMapper.toDomain(response.user);
+    return { token: response.token, user: this.currentUser };
   }
 
   async login(data: UserAuthRequest): Promise<JwtTokenValue> {

@@ -1,11 +1,26 @@
+import { Platform } from "react-native";
 import { AxiosHttpClient } from "./axios.client";
 import { JwtTokenValueDto } from "./dto/token.dto";
 import {
   UserAuthRequestDTO,
   UserDTO,
+  UserImageDTO,
   UserProfileDTO,
   UserRegisterRequestDTO,
 } from "./dto/user.dto";
+
+type UserResponsePayload = {
+  id: string;
+  email: string;
+  username: string;
+  name: string;
+  gender: string;
+  dateOfBirth: string;
+  preferences: string[];
+  images: UserImageDTO[];
+  role: string;
+  dateOfCreation: string;
+};
 
 class AuthApi {
   private httpClient: AxiosHttpClient;
@@ -20,25 +35,48 @@ class AuthApi {
     try {
       console.log("[AuthApi] Registering user:", dto.email);
 
+      // Build FormData for multipart upload
+      const formData = new FormData();
+      formData.append("email", dto.email);
+      formData.append("password", dto.password);
+      formData.append("username", dto.username);
+      formData.append("name", dto.name);
+      formData.append("gender", dto.gender);
+      formData.append("dateOfBirth", dto.dateOfBirth);
+      formData.append("preferences", JSON.stringify(dto.preferences));
+
+      // Append photo files
+      for (const photo of dto.photos) {
+        const uri =
+          Platform.OS === "ios" ? photo.uri.replace("file://", "") : photo.uri;
+        const filename = uri.split("/").pop() || "photo.jpg";
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : "image/jpeg";
+
+        formData.append(`photos_${photo.width}x${photo.height}`, {
+          uri: photo.uri,
+          name: filename,
+          type,
+        } as any);
+      }
+
       const response = await this.httpClient.client.post<{
         token: string;
-        user: {
-          id: string;
-          email: string;
-          username: string;
-          role: string;
-          dateOfCreation: string;
-        };
-      }>("/auth/register", dto);
+        user: UserResponsePayload;
+      }>("/auth/register", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
       console.log(
         "[AuthApi] Registration successful:",
         response.data.user.email,
       );
 
-      // Convert ISO dateOfCreation to yyyy-MM-dd format
       const user: UserDTO = {
         ...response.data.user,
+        images: response.data.user.images || [],
         dateOfCreation: response.data.user.dateOfCreation.split("T")[0],
       };
 
@@ -65,20 +103,14 @@ class AuthApi {
 
       const response = await this.httpClient.client.post<{
         token: string;
-        user: {
-          id: string;
-          email: string;
-          username: string;
-          role: string;
-          dateOfCreation: string;
-        };
+        user: UserResponsePayload;
       }>("/auth/login", dto);
 
       console.log("[AuthApi] Login successful:", response.data.user.email);
 
-      // Convert ISO dateOfCreation to yyyy-MM-dd format
       const user: UserDTO = {
         ...response.data.user,
+        images: response.data.user.images || [],
         dateOfCreation: response.data.user.dateOfCreation.split("T")[0],
       };
 
@@ -102,19 +134,14 @@ class AuthApi {
     try {
       console.log("[AuthApi] Getting user info");
 
-      const response = await this.httpClient.client.get<{
-        id: string;
-        email: string;
-        username: string;
-        role: string;
-        dateOfCreation: string;
-      }>("/auth/me");
+      const response =
+        await this.httpClient.client.get<UserResponsePayload>("/auth/me");
 
       console.log("[AuthApi] User info retrieved:", response.data.email);
 
-      // Convert ISO dateOfCreation to yyyy-MM-dd format
       return {
         ...response.data,
+        images: response.data.images || [],
         dateOfCreation: response.data.dateOfCreation.split("T")[0],
       };
     } catch (error: any) {

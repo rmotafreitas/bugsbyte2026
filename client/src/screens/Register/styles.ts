@@ -260,4 +260,37 @@ export const styles = StyleSheet.create({
   continueButtonTextDisabled: {
     color: THEME.COLORS.CAPTION_400,
   },
+
+  // Account step (email/password)
+  accountForm: {
+    gap: 24,
+  },
+  inputGroup: {
+    gap: 8,
+  },
+  inputLabel: {
+    fontFamily: THEME.FONT_FAMILY.BOLD,
+    fontSize: THEME.FONT_SIZE.SM,
+    color: THEME.COLORS.TEXT,
+    letterSpacing: 0.5,
+  },
+  formInput: {
+    borderWidth: 1,
+    borderColor: THEME.COLORS.BORDER,
+    borderRadius: 4,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontFamily: THEME.FONT_FAMILY.REGULAR,
+    fontSize: THEME.FONT_SIZE.MD,
+    color: THEME.COLORS.TEXT,
+  },
+  formInputError: {
+    borderColor: "#E53935",
+  },
+  errorText: {
+    fontFamily: THEME.FONT_FAMILY.REGULAR,
+    fontSize: THEME.FONT_SIZE.SM,
+    color: "#E53935",
+    marginTop: 4,
+  },
 });
