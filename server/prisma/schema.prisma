@@ -16,43 +16,46 @@ model User {
   username       String   @unique
   password       String
   role           String   @default("user")
-  dateOfCreation DateTime @default(now())
+  dateOfCreation DateTime @default(now())  
+  images         Image[]
 
-  // Balance
-  balance Float @default(0)
-
-  // Relations
-  transactions Transaction[]
-  trades       Trade[]
+  carts Cart[]
 }
 
-model Transaction {
-  id           String   @id @default(uuid())
-  userId       String
-  type         String // "deposit" | "withdrawal"
-  amount       Float
-  balanceAfter Float
-  createdAt    DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  price       Float
+  category    String
+  imageUrl    String
+
+
+  carts Cart[]
 }
 
-model Trade {
-  id            String   @id @default(uuid())
-  userId        String
-  symbol        String
-  amount        Float // Amount in base currency (e.g. BTC)
-  costUSD       Float // Total cost to buy
-  revenueUSD    Float // Total revenue from sell
-  feesUSD       Float // Total fees paid
-  profitUSD     Float // Net profit/loss
-  profitPercent Float // Net profit/loss percentage
-  buyExchange   String
-  sellExchange  String
-  buyPrice      Float
-  sellPrice     Float
-  status        String   @default("executed") // "executed" | "failed"
-  createdAt     DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+model Cart{
+  id        String   @id @default(uuid())
+  user_id   String
+  user      User     @relation(fields: [user_id], references: [id])
+  product_id String
+  product   Product  @relation(fields: [product_id], references: [id])
+  quantity  Int      @default(1)
+  
+  @@index([user_id, product_id])
 }
+
+
+model Image {
+  id       String   @id @default(uuid())
+  user_id  String
+  user     User     @relation(fields: [user_id], references: [id])
+  url      String   // Could be URL or base64 - consider splitting
+  type     String   @default("url") // "url" | "base64"
+  
+  @@index([user_id])
+}
+
+
