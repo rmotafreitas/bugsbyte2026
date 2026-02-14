@@ -493,6 +493,22 @@ export const orderBookArbitrageRoute = async (app: FastifyInstance) => {
           okx: await import("../../lib/exchanges/okx.adapter").then(
             (m) => new m.OKXAdapter(),
           ),
+
+          mexc: await import("../../lib/exchanges/mexc.adapter").then(
+            (m) => new m.MEXCAdapter(),
+          ),
+          gate: await import("../../lib/exchanges/gate.adapter").then(
+            (m) => new m.GateAdapter(),
+          ),
+          kucoin: await import("../../lib/exchanges/kucoin.adapter").then(
+            (m) => new m.KuCoinAdapter(),
+          ),
+          bitget: await import("../../lib/exchanges/bitget.adapter").then(
+            (m) => new m.BitgetAdapter(),
+          ),
+          bybit: await import("../../lib/exchanges/bybit.adapter").then(
+            (m) => new m.BybitAdapter(),
+          ),
         };
 
         const adapter = exchangeMap[exchange.toLowerCase()];
@@ -529,6 +545,449 @@ export const orderBookArbitrageRoute = async (app: FastifyInstance) => {
             error instanceof Error ? error.message : "Unknown error occurred",
         });
       }
+    },
+  );
+
+  /**
+   * GET /api/orderbook-arbitrage/spreads
+   * FAST ticker-based spread scanner - no amount dependency, no slippage
+   * Shows raw spreads + profit under different fee scenarios (maker vs taker)
+   * This is the best endpoint for finding real opportunities
+   */
+  app.get(
+    "/api/orderbook-arbitrage/spreads",
+    {
+      preHandler: [app.authenticate],
+      schema: {
+        description:
+          "FAST spread scanner using tickers (not order books). No amount dependency - shows pure price spreads across exchanges. " +
+          "Calculates profit under 3 fee scenarios: maker+maker (limit orders), taker+taker (market orders), and hybrid. " +
+          "Much faster than /scan and shows opportunities that would be profitable with limit orders.",
+        tags: ["Order Book Arbitrage"],
+        summary: "Fast ticker spread scanner (no amount needed)",
+        security: [{ bearerAuth: [] }],
+        querystring: {
+          type: "object",
+          properties: {
+            symbols: {
+              type: "string",
+              description:
+                "Comma-separated pairs (e.g. 'PEPE/USDT,WIF/USDT'). Leave empty for default list.",
+            },
+            preset: {
+              type: "string",
+              enum: ["memecoins", "midcap", "largecap", "all"],
+              default: "all",
+              description: "Preset symbol list to scan",
+            },
+          },
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              success: { type: "boolean" },
+              data: { type: "object", additionalProperties: true },
+              meta: { type: "object", additionalProperties: true },
+            },
+          },
+          401: { $ref: "ErrorResponse#" },
+          500: { $ref: "ErrorResponse#" },
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const { symbols, preset } = request.query as {
+          symbols?: string;
+          preset?: string;
+        };
+
+        let symbolList: string[];
+
+        if (symbols) {
+          symbolList = symbols
+            .split(",")
+            .map((s) => s.trim().toUpperCase())
+            .filter((s) => s.length > 0);
+        } else {
+          const presets: Record<string, string[]> = {
+            memecoins: [
+              "PEPE/USDT",
+              "BONK/USDT",
+              "WIF/USDT",
+              "FLOKI/USDT",
+              "SHIB/USDT",
+              "DOGE/USDT",
+            ],
+            midcap: [
+              "SEI/USDT",
+              "SUI/USDT",
+              "TIA/USDT",
+              "INJ/USDT",
+              "JUP/USDT",
+              "STRK/USDT",
+              "PYTH/USDT",
+              "JTO/USDT",
+              "ONDO/USDT",
+              "RENDER/USDT",
+            ],
+            largecap: [
+              "BTC/USDT",
+              "ETH/USDT",
+              "SOL/USDT",
+              "XRP/USDT",
+              "ADA/USDT",
+              "AVAX/USDT",
+              "LINK/USDT",
+              "DOT/USDT",
+            ],
+            all: OrderBookArbitrageService.HIGH_OPPORTUNITY_SYMBOLS,
+          };
+
+          symbolList = presets[preset || "all"] || presets.all;
+        }
+
+        const scanResult =
+          await orderBookArbitrageService.tickerSpreadScan(symbolList);
+
+        // Log profitable findings
+        scanResult.results
+          .filter((r) => r.bestSpread?.isProfitableWithMaker)
+          .forEach((r) => {
+            const s = r.bestSpread!;
+            console.log(
+              `💰 SPREAD: ${r.symbol} | ${s.buyExchange} → ${s.sellExchange} | gross: ${s.grossSpreadPercent.toFixed(4)}% | maker net: ${s.netProfitWithMakerFees.percent.toFixed(4)}% | ~$${s.estimatedProfitPer1000USD.withMakerFees.toFixed(2)}/1k`,
+            );
+          });
+
+        return reply.status(200).send({
+          success: true,
+          data: scanResult,
+          meta: {
+            requestedBy: request.user.username || request.user.email,
+            requestTimestamp: new Date().toISOString(),
+            preset: symbols ? "custom" : preset || "all",
+            explanation: {
+              grossSpreadPercent:
+                "Raw price difference between exchanges (buy at ask, sell at bid). Positive = sell price > buy price.",
+              netProfitWithMakerFees:
+                "Profit after paying maker fees on both sides (both limit orders). This is the best case scenario.",
+              netProfitWithTakerFees:
+                "Profit after paying taker fees on both sides (both market orders). This is what /scan calculates.",
+              netProfitHybrid:
+                "Profit with limit buy (maker fee) + market sell (taker fee). Most realistic for manual trading.",
+              estimatedProfitPer1000USD:
+                "Estimated USD profit per $1000 traded under each fee scenario.",
+              tip: "If grossSpreadPercent is positive but netProfitWithTakerFees is negative, use LIMIT ORDERS to capture the spread with lower fees.",
+            },
+          },
+        });
+      } catch (error) {
+        console.error("Error in ticker spread scan:", error);
+
+        return reply.status(500).send({
+          success: false,
+          error: "Failed to scan spreads",
+          message:
+            error instanceof Error ? error.message : "Unknown error occurred",
+        });
+      }
+    },
+  );
+
+  /**
+   * GET /api/orderbook-arbitrage/scan
+   * Scan multiple symbols at once to find the best arbitrage opportunities across all exchanges
+   * This is the main endpoint for finding profitable trades
+   */
+  app.get(
+    "/api/orderbook-arbitrage/scan",
+    {
+      preHandler: [app.authenticate],
+      schema: {
+        description:
+          "Scans multiple trading pairs across all 9 exchanges to find the best arbitrage opportunities. " +
+          "Use without parameters to scan the curated high-opportunity list, or provide custom symbols. " +
+          "This is the primary endpoint for finding profitable spreads.",
+        tags: ["Order Book Arbitrage"],
+        summary: "Multi-symbol arbitrage scanner",
+        security: [{ bearerAuth: [] }],
+        querystring: {
+          type: "object",
+          properties: {
+            symbols: {
+              type: "string",
+              description:
+                "Comma-separated trading pairs (e.g. 'PEPE/USDT,WIF/USDT,SUI/USDT'). Leave empty to scan default high-opportunity list.",
+            },
+            amountUSD: {
+              type: "string",
+              default: "1000",
+              description:
+                "Trade amount in USD. The scanner will auto-convert to the correct base currency amount per symbol.",
+            },
+            preset: {
+              type: "string",
+              enum: ["memecoins", "midcap", "largecap", "all"],
+              default: "all",
+              description:
+                "Use a preset symbol list: 'memecoins' (PEPE, BONK, WIF, FLOKI, SHIB, DOGE), 'midcap' (SEI, SUI, TIA, INJ, JUP, etc), 'largecap' (BTC, ETH, SOL, XRP, etc), 'all' (everything)",
+            },
+          },
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              success: { type: "boolean" },
+              data: { type: "object", additionalProperties: true },
+              meta: { type: "object", additionalProperties: true },
+            },
+          },
+          401: { $ref: "ErrorResponse#" },
+          500: { $ref: "ErrorResponse#" },
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const { symbols, amountUSD, preset } = request.query as {
+          symbols?: string;
+          amountUSD?: string;
+          preset?: string;
+        };
+
+        const tradeAmountUSD = amountUSD ? parseFloat(amountUSD) : 1000;
+
+        let symbolList: string[];
+
+        if (symbols) {
+          // Custom symbol list
+          symbolList = symbols
+            .split(",")
+            .map((s) => s.trim().toUpperCase())
+            .filter((s) => s.length > 0);
+        } else {
+          // Use preset lists
+          const presets: Record<string, string[]> = {
+            memecoins: [
+              "PEPE/USDT",
+              "BONK/USDT",
+              "WIF/USDT",
+              "FLOKI/USDT",
+              "SHIB/USDT",
+              "DOGE/USDT",
+            ],
+            midcap: [
+              "SEI/USDT",
+              "SUI/USDT",
+              "TIA/USDT",
+              "INJ/USDT",
+              "JUP/USDT",
+              "STRK/USDT",
+              "PYTH/USDT",
+              "JTO/USDT",
+              "ONDO/USDT",
+              "RENDER/USDT",
+            ],
+            largecap: [
+              "BTC/USDT",
+              "ETH/USDT",
+              "SOL/USDT",
+              "XRP/USDT",
+              "ADA/USDT",
+              "AVAX/USDT",
+              "LINK/USDT",
+              "DOT/USDT",
+            ],
+            all: OrderBookArbitrageService.HIGH_OPPORTUNITY_SYMBOLS,
+          };
+
+          symbolList = presets[preset || "all"] || presets.all;
+        }
+
+        const scanResult = await orderBookArbitrageService.scanMultipleSymbols(
+          symbolList,
+          tradeAmountUSD,
+        );
+
+        // Log profitable opportunities
+        scanResult.results
+          .filter((r) => r.bestOpportunity?.isProfitable)
+          .forEach((r) => {
+            console.log(
+              `💰 PROFITABLE: ${r.symbol} | ${r.bestOpportunity!.buyExchange} → ${r.bestOpportunity!.sellExchange} | ${r.bestOpportunity!.netProfitPercentage.toFixed(3)}% | $${r.bestOpportunity!.netProfitUSD.toFixed(2)}`,
+            );
+          });
+
+        return reply.status(200).send({
+          success: true,
+          data: scanResult,
+          meta: {
+            requestedBy: request.user.username || request.user.email,
+            requestTimestamp: new Date().toISOString(),
+            tradeAmountUSD,
+            preset: symbols ? "custom" : preset || "all",
+            tips: {
+              message:
+                "Arbitrage opportunities are fleeting. The best spreads appear during high volatility events, new listings, and off-peak hours.",
+              bestPractices: [
+                "Memecoins (PEPE, WIF, BONK) have widest spreads but more risk",
+                "Use smaller amounts ($100-$500) to avoid slippage",
+                "MEXC has 0% maker fee - great for the buy side",
+                "Scan frequently - opportunities last seconds",
+                "Check during Asian trading hours (UTC 0-8) for more volatility",
+                "New coin listings often have 1-5% spreads for the first hours",
+              ],
+            },
+          },
+        });
+      } catch (error) {
+        console.error("Error in multi-symbol scan:", error);
+
+        return reply.status(500).send({
+          success: false,
+          error: "Failed to scan symbols",
+          message:
+            error instanceof Error ? error.message : "Unknown error occurred",
+        });
+      }
+    },
+  );
+
+  /**
+   * GET /api/orderbook-arbitrage/coins
+   * Returns the curated list of high-opportunity coins with tips
+   */
+  app.get(
+    "/api/orderbook-arbitrage/coins",
+    {
+      schema: {
+        description:
+          "Returns curated lists of trading pairs categorized by volatility and spread potential. No auth required.",
+        tags: ["Order Book Arbitrage"],
+        summary: "Get recommended coins for arbitrage",
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              success: { type: "boolean" },
+              data: { type: "object", additionalProperties: true },
+            },
+          },
+        },
+      },
+    },
+    async (_request, reply) => {
+      return reply.status(200).send({
+        success: true,
+        data: {
+          presets: {
+            memecoins: {
+              description:
+                "High volatility memecoins - widest spreads, higher risk",
+              spreadPotential: "high",
+              symbols: [
+                "PEPE/USDT",
+                "BONK/USDT",
+                "WIF/USDT",
+                "FLOKI/USDT",
+                "SHIB/USDT",
+                "DOGE/USDT",
+              ],
+            },
+            midcap: {
+              description:
+                "Mid-cap altcoins - good balance of spread and liquidity",
+              spreadPotential: "medium",
+              symbols: [
+                "SEI/USDT",
+                "SUI/USDT",
+                "TIA/USDT",
+                "INJ/USDT",
+                "JUP/USDT",
+                "STRK/USDT",
+                "PYTH/USDT",
+                "JTO/USDT",
+                "ONDO/USDT",
+                "RENDER/USDT",
+              ],
+            },
+            largecap: {
+              description:
+                "Large cap coins - tight spreads but massive volume for safety",
+              spreadPotential: "low",
+              symbols: [
+                "BTC/USDT",
+                "ETH/USDT",
+                "SOL/USDT",
+                "XRP/USDT",
+                "ADA/USDT",
+                "AVAX/USDT",
+                "LINK/USDT",
+                "DOT/USDT",
+              ],
+            },
+          },
+          exchanges: {
+            lowestFees: [
+              {
+                id: "mexc",
+                name: "MEXC",
+                makerFee: "0.00%",
+                takerFee: "0.10%",
+                tip: "Best for buy side - zero maker fee",
+              },
+              {
+                id: "binance",
+                name: "Binance",
+                makerFee: "0.10%",
+                takerFee: "0.10%",
+                tip: "Most liquid - tightest spreads",
+              },
+              {
+                id: "bybit",
+                name: "Bybit",
+                makerFee: "0.10%",
+                takerFee: "0.10%",
+                tip: "Good altcoin selection",
+              },
+              {
+                id: "okx",
+                name: "OKX",
+                makerFee: "0.08%",
+                takerFee: "0.10%",
+                tip: "Lowest maker fee on major exchange",
+              },
+            ],
+            highestFees: [
+              {
+                id: "coinbase",
+                name: "Coinbase",
+                makerFee: "0.40%",
+                takerFee: "0.60%",
+                tip: "Avoid for arbitrage - fees too high",
+              },
+              {
+                id: "kraken",
+                name: "Kraken",
+                makerFee: "0.16%",
+                takerFee: "0.26%",
+                tip: "High fees but sometimes has wider spreads",
+              },
+            ],
+          },
+          tips: [
+            "🔥 Scan memecoins during high volatility for 0.1-0.5% spreads",
+            "💎 MEXC (0% maker) + Binance combo is the lowest fee pair",
+            "⏰ Best times: market opens, news events, new listings",
+            "📉 Use $100-$500 amounts to minimize slippage",
+            "🔄 Run /scan every 30-60 seconds to catch fleeting opportunities",
+            "🆕 New listings often have 1-5% spreads across exchanges",
+          ],
+        },
+      });
     },
   );
 };

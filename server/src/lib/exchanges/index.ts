@@ -16,3 +16,8 @@ export { BinanceAdapter } from "./binance.adapter";
 export { KrakenAdapter } from "./kraken.adapter";
 export { CoinbaseAdapter } from "./coinbase.adapter";
 export { OKXAdapter } from "./okx.adapter";
+export { MEXCAdapter } from "./mexc.adapter";
+export { GateAdapter } from "./gate.adapter";
+export { KuCoinAdapter } from "./kucoin.adapter";
+export { BitgetAdapter } from "./bitget.adapter";
+export { BybitAdapter } from "./bybit.adapter";

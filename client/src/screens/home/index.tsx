@@ -1,27 +1,23 @@
 // screens/home/index.tsx
+import { Ionicons } from "@expo/vector-icons";
+import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
+import { CompositeScreenProps, useFocusEffect } from "@react-navigation/native";
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React from "react";
 import {
-  Text,
-  View,
+  Animated,
   SafeAreaView,
   ScrollView,
+  Text,
   TouchableOpacity,
-  Platform,
-  Animated,
-  Switch,
+  View,
 } from "react-native";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { styles } from "./styles";
-import { THEME } from "../../constants/theme";
-import {
-  CompositeScreenProps,
-  useFocusEffect,
-  useNavigation,
-} from "@react-navigation/native";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { MainTabParamList, RootStackParamList } from "../../navigation";
-import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
+import { AnimatedBalance } from "../../components/animated-balance";
 import { LoadingSpinner } from "../../components/loading-spinner";
+import { THEME } from "../../constants/theme";
+import { BalanceService } from "../../core/services/balance.service";
+import { MainTabParamList, RootStackParamList } from "../../navigation";
+import { styles } from "./styles";
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, "Home">,
@@ -41,6 +37,9 @@ interface ArbitrageSnipe {
 export function HomeScreen({ navigation }: Props) {
   const [autoTradeEnabled, setAutoTradeEnabled] = React.useState(true);
   const [loading, setLoading] = React.useState(false);
+  const [balance, setBalance] = React.useState(0);
+  const [tradingValue, setTradingValue] = React.useState(0);
+  const [tradingChange, setTradingChange] = React.useState(0);
   const pulseAnim = React.useRef(new Animated.Value(0)).current;
 
   // Mock data for demonstration
@@ -108,105 +107,105 @@ export function HomeScreen({ navigation }: Props) {
     ).start();
   }, []);
 
+  const handleDeposit = () => {
+    navigation.navigate("Wallet");
+  };
+
+  const handleWithdraw = () => {
+    navigation.navigate("Wallet");
+  };
+
+  const handleExchange = () => {
+    // TODO: Implement exchange feature
+    navigation.navigate("Wallet");
+  };
+
+  const handleDetails = () => {
+    navigation.navigate("Transactions");
+  };
+
   const renderHeader = () => (
     <View style={styles.header}>
+      {/* Background gradient effect - MUST be first so it renders behind everything */}
+      <View style={styles.headerGradient} />
+
       {/* User Avatar */}
       <View style={styles.avatarContainer}>
-        <View style={styles.avatar}>
+        <TouchableOpacity
+          style={styles.avatar}
+          onPress={() => navigation.navigate("Profile")}
+        >
           <Ionicons name="person" size={20} color={THEME.colors.foreground} />
-        </View>
+        </TouchableOpacity>
       </View>
 
-      {/* Total Equity */}
+      {/* Wallet Balance */}
       <View style={styles.equityContainer}>
-        <Text style={styles.equityLabel}>Total Equity</Text>
-        <Text style={styles.equityAmount}>{totalEquity}</Text>
-        <View style={styles.changeBadge}>
-          <Ionicons name="trending-up" size={14} color={THEME.colors.primary} />
-          <Text style={styles.changeText}>
-            {dailyChange} ({dailyChangePercent})
+        <Text style={styles.equityLabel}>Main Account</Text>
+        <AnimatedBalance
+          value={balance}
+          fontSize={48}
+          color={THEME.colors.foreground}
+        />
+        {/* Trading Value */}
+        <View style={styles.tradingValueContainer}>
+          <Text style={styles.tradingLabel}>Trading: </Text>
+          <Text style={styles.tradingValue}>€{tradingValue.toFixed(2)}</Text>
+          <Text style={styles.tradingLabel}>
+            {tradingChange >= 0 ? "+" : "-"}
+          </Text>
+          <Text
+            style={[
+              styles.tradingChange,
+              { color: tradingChange >= 0 ? THEME.colors.primary : "#FF6B6B" },
+            ]}
+          >
+            €{Math.abs(tradingChange).toFixed(2)}
+          </Text>
+          <Text style={styles.tradingLabel}> = </Text>
+          <Text style={styles.tradingResult}>
+            €{(tradingValue + tradingChange).toFixed(2)}
           </Text>
         </View>
       </View>
 
-      {/* Background gradient effect */}
-      <View style={styles.headerGradient} />
-    </View>
-  );
-
-  const renderEngineStatus = () => (
-    <View style={styles.engineCard}>
-      <View style={styles.engineHeader}>
-        <Text style={styles.cardTitle}>Arbitrage Engine</Text>
-        <Switch
-          value={autoTradeEnabled}
-          onValueChange={setAutoTradeEnabled}
-          trackColor={{ false: "#3A3A3A", true: THEME.colors.primary }}
-          thumbColor={"#FFFFFF"}
-          ios_backgroundColor="#3A3A3A"
-        />
-      </View>
-
-      {/* Exchange Connection Visual */}
-      <View style={styles.exchangeConnection}>
-        {/* Binance */}
-        <View style={styles.exchangeIcon}>
-          <View style={[styles.exchangeBadge, { backgroundColor: "#F3BA2F" }]}>
-            <MaterialCommunityIcons name="bitcoin" size={28} color="#0A0A0A" />
+      {/* Action Buttons */}
+      <View style={styles.actionButtons}>
+        <TouchableOpacity style={styles.actionBtn} onPress={handleDeposit}>
+          <View style={styles.actionBtnIcon}>
+            <Ionicons name="add" size={20} color={THEME.colors.primary} />
           </View>
-          <Text style={styles.exchangeName}>Binance</Text>
-        </View>
+          <Text style={styles.actionBtnText}>Deposit</Text>
+        </TouchableOpacity>
 
-        {/* Connection Line */}
-        <View style={styles.connectionLineContainer}>
-          <Animated.View
-            style={[
-              styles.connectionLine,
-              {
-                opacity: pulseAnim,
-              },
-            ]}
-          />
-          <View style={styles.connectionLineBg} />
-          <Ionicons
-            name="arrow-forward"
-            size={16}
-            color={THEME.colors.primary}
-            style={styles.connectionArrow}
-          />
-        </View>
-
-        {/* Uphold */}
-        <View style={styles.exchangeIcon}>
-          <View style={[styles.exchangeBadge, { backgroundColor: "#27AB6E" }]}>
-            <MaterialCommunityIcons name="wallet" size={28} color="#FFFFFF" />
+        <TouchableOpacity style={styles.actionBtn} onPress={handleWithdraw}>
+          <View style={styles.actionBtnIcon}>
+            <Ionicons name="wallet" size={20} color="#FF6B6B" />
           </View>
-          <Text style={styles.exchangeName}>Uphold</Text>
-        </View>
-      </View>
+          <Text style={styles.actionBtnText}>Withdraw</Text>
+        </TouchableOpacity>
 
-      {/* Status Metrics */}
-      <View style={styles.statusMetrics}>
-        <View style={styles.metricItem}>
-          <View style={styles.statusDot} />
-          <Text style={styles.metricLabel}>Status</Text>
-          <Text style={styles.metricValue}>{engineStatus}</Text>
-        </View>
-        <View style={styles.metricItem}>
-          <View
-            style={[
-              styles.statusDot,
-              { backgroundColor: THEME.colors.primary },
-            ]}
-          />
-          <Text style={styles.metricLabel}>Latency</Text>
-          <Text style={styles.metricValue}>{latency}</Text>
-        </View>
-        <View style={styles.metricItem}>
-          <Ionicons name="flash" size={12} color={THEME.colors.warning} />
-          <Text style={styles.metricLabel}>Spread</Text>
-          <Text style={styles.metricValue}>{spread}</Text>
-        </View>
+        <TouchableOpacity style={styles.actionBtn} onPress={handleExchange}>
+          <View style={styles.actionBtnIcon}>
+            <Ionicons
+              name="swap-horizontal"
+              size={20}
+              color={THEME.colors.primary}
+            />
+          </View>
+          <Text style={styles.actionBtnText}>Exchange</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.actionBtn} onPress={handleDetails}>
+          <View style={styles.actionBtnIcon}>
+            <Ionicons
+              name="receipt-outline"
+              size={20}
+              color={THEME.colors.primary}
+            />
+          </View>
+          <Text style={styles.actionBtnText}>Details</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -279,8 +278,24 @@ export function HomeScreen({ navigation }: Props) {
     React.useCallback(() => {
       // Simulate data fetching
       setLoading(false);
+
+      // Load balance
+      loadBalance();
     }, []),
   );
+
+  const loadBalance = async () => {
+    try {
+      const balanceData = await BalanceService.getBalance();
+      setBalance(balanceData.balance);
+
+      // Mock trading value (this would come from actual trading data)
+      setTradingValue(balanceData.balance * 0.05); // 5% of balance in trading
+      setTradingChange(Math.random() * 20 - 10); // Random change for demo
+    } catch (error) {
+      console.error("Error loading balance:", error);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -291,14 +306,7 @@ export function HomeScreen({ navigation }: Props) {
       >
         {renderHeader()}
 
-        {loading ? (
-          <LoadingSpinner />
-        ) : (
-          <>
-            {renderEngineStatus()}
-            {renderLiveSnipes()}
-          </>
-        )}
+        {loading ? <LoadingSpinner /> : <>{renderLiveSnipes()}</>}
       </ScrollView>
 
       {renderSafetyFooter()}

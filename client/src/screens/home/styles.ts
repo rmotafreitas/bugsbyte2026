@@ -17,11 +17,11 @@ export const styles = StyleSheet.create({
     paddingBottom: 120, // Space for safety footer
   },
 
-  // Header Styles (Total Equity Section)
+  // Header Styles (Wallet Section - Revolut style)
   header: {
     padding: 20,
     paddingTop: 60,
-    paddingBottom: 40,
+    paddingBottom: 32,
     backgroundColor: THEME.colors.background,
     position: "relative",
     overflow: "hidden",
@@ -53,7 +53,8 @@ export const styles = StyleSheet.create({
   },
   equityContainer: {
     alignItems: "center",
-    marginTop: 20,
+    marginTop: 16,
+    marginBottom: 8,
   },
   equityLabel: {
     fontSize: 14,
@@ -61,6 +62,7 @@ export const styles = StyleSheet.create({
     marginBottom: 8,
     fontWeight: "500",
     letterSpacing: 1,
+    textTransform: "uppercase",
   },
   equityAmount: {
     fontSize: 48,
@@ -69,6 +71,63 @@ export const styles = StyleSheet.create({
     marginBottom: 12,
     letterSpacing: -1,
   },
+
+  // Trading Value
+  tradingValueContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 8,
+    gap: 8,
+  },
+  tradingLabel: {
+    fontSize: 13,
+    color: THEME.colors.mutedForeground,
+    fontWeight: "500",
+  },
+  tradingValue: {
+    fontSize: 13,
+    color: THEME.colors.foreground,
+    fontWeight: "600",
+  },
+  tradingChange: {
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  tradingResult: {
+    fontSize: 13,
+    color: THEME.colors.foreground,
+    fontWeight: "700",
+  },
+
+  // Action Buttons (Revolut style)
+  actionButtons: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 16,
+    marginTop: 20,
+    paddingHorizontal: 12,
+  },
+  actionBtn: {
+    alignItems: "center",
+    gap: 6,
+    flex: 1,
+  },
+  actionBtnIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: `${THEME.colors.primary}15`,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  actionBtnText: {
+    fontSize: 11,
+    color: THEME.colors.foreground,
+    fontWeight: "500",
+  },
+
   changeBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -82,6 +141,55 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     color: THEME.colors.primary,
     fontWeight: "600",
+  },
+
+  // Wallet Card
+  walletCard: {
+    marginHorizontal: 20,
+    marginTop: 20,
+    marginBottom: 12,
+    padding: 20,
+    backgroundColor: THEME.colors.card,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: THEME.colors.border,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  walletCardLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+  },
+  walletIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: `${THEME.colors.primary}15`,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  walletLabel: {
+    fontSize: 13,
+    color: THEME.colors.mutedForeground,
+    marginBottom: 6,
+    fontWeight: "500",
+  },
+  walletBalanceContainer: {
+    flexDirection: "row",
+    alignItems: "center",
   },
 
   // Engine Status Card

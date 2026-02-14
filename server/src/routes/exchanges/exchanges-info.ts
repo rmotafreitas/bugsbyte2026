@@ -9,6 +9,11 @@ import {
   KrakenAdapter,
   CoinbaseAdapter,
   OKXAdapter,
+  GateAdapter,
+  KuCoinAdapter,
+  BitgetAdapter,
+  BybitAdapter,
+  MEXCAdapter,
 } from "../../lib/exchanges";
 import type { ExchangeAdapter, ExchangeInfo } from "../../lib/exchanges";
 
@@ -17,6 +22,11 @@ const exchangeAdapters: ExchangeAdapter[] = [
   new KrakenAdapter(),
   new CoinbaseAdapter(),
   new OKXAdapter(),
+  new GateAdapter(),
+  new KuCoinAdapter(),
+  new BitgetAdapter(),
+  new BybitAdapter(),
+  new MEXCAdapter(),
 ];
 
 export const exchangesInfoRoute = async (app: FastifyInstance) => {

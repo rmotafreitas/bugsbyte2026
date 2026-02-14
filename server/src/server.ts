@@ -161,6 +161,15 @@ app
     console.log(`   POST ${address}/api/balance/trade`);
     console.log(`\n   �📊 Order Book Arbitrage (Spread Hunters):`);
     console.log(`   GET  ${address}/api/orderbook-arbitrage/analyze`);
+    console.log(
+      `   GET  ${address}/api/orderbook-arbitrage/spreads     🔥 FAST SPREAD SCANNER`,
+    );
+    console.log(
+      `   GET  ${address}/api/orderbook-arbitrage/scan        ⭐ MULTI-SYMBOL SCANNER`,
+    );
+    console.log(
+      `   GET  ${address}/api/orderbook-arbitrage/coins       📋 Recommended coins`,
+    );
     console.log(`   POST ${address}/api/orderbook-arbitrage/simulate`);
     console.log(`   GET  ${address}/api/orderbook-arbitrage/history`);
     console.log(`   GET  ${address}/api/orderbook-arbitrage/pl-summary`);

@@ -16,11 +16,15 @@ import { useAuth } from "../contexts/auth";
 import { LoginScreen } from "../screens/auth";
 import { HomeScreen } from "../screens/home";
 import { ProfileScreen } from "../screens/profile";
+import { WalletScreen } from "../screens/wallet";
+import { TransactionsScreen } from "../screens/transactions";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export type RootStackParamList = {
   Back: undefined;
   Profile: undefined;
+  Wallet: undefined;
+  Transactions: undefined;
 };
 
 export type MainTabParamList = {
@@ -183,6 +187,20 @@ export function AppNavigator() {
                 )
               : undefined,
         })}
+      />
+      <Stack.Screen
+        name="Wallet"
+        component={WalletScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="Transactions"
+        component={TransactionsScreen}
+        options={{
+          headerShown: false,
+        }}
       />
     </Stack.Navigator>
   );
