@@ -18,6 +18,52 @@ export const arbitrageRoute = async (app: FastifyInstance) => {
     "/api/arbitrage/btc",
     {
       preHandler: [app.authenticate],
+      schema: {
+        description:
+          "Returns BTC/USDT ticker-based arbitrage opportunities across multiple exchanges. Uses top-of-book prices for quick comparison.",
+        tags: ["Arbitrage"],
+        summary: "Get BTC arbitrage data (ticker-based)",
+        security: [{ bearerAuth: [] }],
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              success: { type: "boolean" },
+              data: {
+                type: "object",
+                properties: {
+                  timestamp: { type: "number" },
+                  datetime: { type: "string" },
+                  symbol: { type: "string" },
+                  exchanges: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        symbol: { type: "string" },
+                        exchangeName: { type: "string" },
+                        exchangeId: { type: "string" },
+                        bid: { type: "number" },
+                        ask: { type: "number" },
+                        last: { type: "number" },
+                        volume: { type: "number" },
+                        timestamp: { type: "number" },
+                        datetime: { type: "string" },
+                      },
+                    },
+                  },
+                  opportunities: { type: "array" },
+                  bestOpportunity: { type: "object", nullable: true },
+                  summary: { type: "object" },
+                },
+              },
+              meta: { type: "object" },
+            },
+          },
+          401: { $ref: "ErrorResponse#" },
+          500: { $ref: "ErrorResponse#" },
+        },
+      },
     },
     async (request, reply) => {
       try {
@@ -54,6 +100,31 @@ export const arbitrageRoute = async (app: FastifyInstance) => {
     "/api/arbitrage/exchanges",
     {
       preHandler: [app.authenticate],
+      schema: {
+        description: "Returns the list of supported exchanges.",
+        tags: ["Arbitrage"],
+        summary: "List supported exchanges",
+        security: [{ bearerAuth: [] }],
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              success: { type: "boolean" },
+              data: {
+                type: "object",
+                properties: {
+                  exchanges: {
+                    type: "array",
+                    items: { type: "string" },
+                  },
+                  count: { type: "number" },
+                },
+              },
+            },
+          },
+          401: { $ref: "ErrorResponse#" },
+        },
+      },
     },
     async (request, reply) => {
       try {

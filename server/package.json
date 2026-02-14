@@ -27,6 +27,8 @@
     "@fastify/jwt": "^7.2.4",
     "@fastify/multipart": "^7.7.3",
     "@fastify/static": "^6.11.2",
+    "@fastify/swagger": "^8.15.0",
+    "@fastify/swagger-ui": "^4.2.0",
     "@prisma/adapter-better-sqlite3": "^7.4.0",
     "@prisma/client": "^7.4.0",
     "ai": "^3.1.12",

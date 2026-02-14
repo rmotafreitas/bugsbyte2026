@@ -3,7 +3,14 @@
  * Export all exchange adapters for easy imports
  */
 
-export type { ExchangeAdapter, ExchangeTickerData } from "./exchange.adapter";
+export type {
+  ExchangeAdapter,
+  ExchangeTickerData,
+  ExchangeInfo,
+  OrderBookData,
+  OrderBookLevel,
+  TradingFees,
+} from "./exchange.adapter";
 export { CCXTBaseAdapter } from "./ccxt-base.adapter";
 export { BinanceAdapter } from "./binance.adapter";
 export { KrakenAdapter } from "./kraken.adapter";
