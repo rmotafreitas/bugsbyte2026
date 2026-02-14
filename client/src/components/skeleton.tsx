@@ -24,7 +24,7 @@ export function Skeleton({ width, height, style }: SkeletonProps) {
           duration: 1000,
           useNativeDriver: true,
         }),
-      ])
+      ]),
     ).start();
   }, []);
 
@@ -42,7 +42,7 @@ export function Skeleton({ width, height, style }: SkeletonProps) {
 
 const styles = StyleSheet.create({
   skeleton: {
-    backgroundColor: THEME.colors.muted,
-    borderRadius: THEME.radius.default,
+    backgroundColor: THEME.COLORS.SHAPE,
+    borderRadius: 8,
   },
 });

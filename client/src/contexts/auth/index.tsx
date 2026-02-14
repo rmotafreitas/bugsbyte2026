@@ -1,6 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { NativeStackNavigationProp } from "react-native-screens/lib/typescript/native-stack/types";
 import { CONFIG } from "../../constants/config";
 import {
   User,
@@ -20,13 +19,8 @@ interface AuthContextType {
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(
-  undefined
+  undefined,
 );
-
-type RootStackParamList = {
-  Profile: undefined;
-  Login: undefined;
-};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,

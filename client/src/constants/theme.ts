@@ -1,50 +1,40 @@
 export const THEME = {
-  colors: {
-    background: "#0A0A0A", // Deep Midnight Black
-    foreground: "#FFFFFF", // White text for dark mode
+  COLORS: {
+    BACKGROUND_900: "#FFFFFF",
+    BACKGROUND_800: "#F5F5F5",
 
-    muted: "#1A1A1A", // Dark grey for muted elements
-    mutedForeground: "#8B8B8B", // Grey text for secondary information
+    TEXT: "#000000",
+    WHITE_TEXT: "#FFFFFF",
+    GRAY_TEXT: "#6B6B6B",
 
-    card: "rgba(26, 26, 26, 0.6)", // Dark semi-transparent glassmorphism
-    cardForeground: "#FFFFFF",
+    CAPTION_500: "#1A1A1A",
+    CAPTION_400: "#999999",
+    CAPTION_300: "#CCCCCC",
 
-    border: "rgba(255, 255, 255, 0.1)", // Subtle white border
-    input: "rgba(26, 26, 26, 0.8)", // Dark input background
+    SHAPE: "#E5E5E5",
 
-    // Primary color: Neon Matrix Green for profits and active status
-    primary: "#00FF94",
-    primaryForeground: "#0A0A0A",
+    PRIMARY: "#000000",
+    SECONDARY: "#FFFFFF",
+    ACCENT: "#E94057",
+    SUCCESS: "#2D2D2D",
+    ALERT: "#E94057",
+    ACTIVE: "#000000",
+    BORDER: "#E0E0E0",
 
-    // Secondary color: Electric Blue for Uphold branding
-    secondary: "#2D7FF9",
-    secondaryForeground: "#FFFFFF",
-
-    // Accent color: Vibrant purple for highlights
-    accent: "#A855F7",
-    accentForeground: "#FFFFFF",
-
-    // Destructive color: Red for losses
-    destructive: "#FF3B30",
-    destructiveForeground: "#FFFFFF",
-
-    popover: "#1A1A1A",
-    popoverForeground: "#FFFFFF",
-
-    ring: "#00FF94",
-
-    // Additional crypto-specific colors
-    success: "#00FF94",
-    warning: "#FFD60A",
-    binance: "#F3BA2F",
-    uphold: "#27AB6E",
+    OVERLAY: "rgba(0,0,0,0.7)",
   },
-  radius: {
-    default: 16, // Rounded corners for glassmorphism
+
+  FONT_FAMILY: {
+    REGULAR: "SK-Regular",
+    MONO: "SK-Mono",
+    BOLD: "SK-Bold",
   },
-  spacing: {
-    small: 8,
-    medium: 16,
-    large: 24,
+
+  FONT_SIZE: {
+    XSM: 11,
+    SM: 13,
+    MD: 15,
+    LG: 22,
+    XL: 32,
   },
 };

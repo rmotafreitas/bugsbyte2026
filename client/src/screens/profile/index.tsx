@@ -1,650 +1,201 @@
-import React, { useState } from "react";
-import {
-  Text,
-  View,
-  SafeAreaView,
-  TouchableOpacity,
-  ScrollView,
-  Alert,
-} from "react-native";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useAuth } from "../../contexts/auth";
+import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { MyStatusBar } from "../../components/my-status-bar";
+import ImageView from "react-native-image-viewing";
+import { Background } from "../../components/Background";
+import { DecisionButtons } from "../../components/DecisionButtons";
 import { styles } from "./styles";
-import { THEME } from "../../constants/theme";
-import { useFocusEffect } from "@react-navigation/native";
-import { authService } from "../../core/services/auth.service";
-import { UserProfile } from "../../core/domain/user";
-import { LoadingSpinner } from "../../components/loading-spinner";
 
-export function ProfileScreen() {
-  const { user, logout } = useAuth();
-  const [isFetching, setIsFetching] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+import { useState } from "react";
+import Checked from "../../assets/buttons/checked.png";
+import DirectMessage from "../../assets/buttons/direct_message.png";
+import DistanceIcon from "../../assets/buttons/distance_red.png";
+import GoBackIcon from "../../assets/buttons/right_white.png";
 
-  const fetchProfile = async () => {
-    try {
-      setError(null);
-      setIsFetching(true);
-      const res = await authService.getProfile();
-      if (res) setProfile(res);
-    } catch (error) {
-      setError("Failed to load profile data");
-      console.error("Failed to fetch profile:", error);
-    } finally {
-      setIsFetching(false);
-    }
-  };
+interface InterestProps {
+  name: string;
+  checked: boolean;
+}
 
-  useFocusEffect(
-    React.useCallback(() => {
-      fetchProfile();
-    }, []),
-  );
-
-  const handleLogout = () => {
-    Alert.alert("Logout", "Are you sure you want to logout?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Logout",
-        style: "destructive",
-        onPress: logout,
-      },
-    ]);
-  };
-
-  if (!user) return null;
-
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
+function Intersest({ name, checked }: InterestProps) {
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
+    <View style={[styles.interest, checked && styles.interestChecked]}>
+      {checked && <Image source={Checked} />}
+      <Text
+        style={[styles.interestText, checked && styles.interestTextChecked]}
       >
-        {/* USER HEADER */}
-        <View style={styles.header}>
-          <View style={styles.avatarContainer}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {user.username.charAt(0).toUpperCase()}
-              </Text>
-            </View>
-            <View style={styles.statusBadge}>
-              <View style={styles.statusDot} />
-            </View>
-          </View>
-          <Text style={styles.username}>@{user.username}</Text>
-          <Text style={styles.email}>{user.email}</Text>
-          <View style={styles.memberBadge}>
-            <Ionicons
-              name="shield-checkmark"
-              size={14}
-              color={THEME.colors.primary}
-            />
-            <Text style={styles.memberText}>Verified Trader</Text>
-          </View>
-        </View>
-
-        {isFetching ? (
-          <LoadingSpinner />
-        ) : error ? (
-          <View style={styles.errorContainer}>
-            <Ionicons
-              name="alert-circle"
-              size={32}
-              color={THEME.colors.destructive}
-            />
-            <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity style={styles.retryButton} onPress={fetchProfile}>
-              <Text style={styles.retryText}>Retry</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <>
-            {/* TRADING STATS */}
-            <View style={styles.statsContainer}>
-              <Text style={styles.sectionTitle}>Trading Performance</Text>
-              <View style={styles.statsGrid}>
-                <View style={styles.statCard}>
-                  <View style={styles.statIconContainer}>
-                    <MaterialCommunityIcons
-                      name="wallet"
-                      size={24}
-                      color={THEME.colors.primary}
-                    />
-                  </View>
-                  <Text style={styles.statValue}>
-                    €{profile?.totalEquity.toLocaleString()}
-                  </Text>
-                  <Text style={styles.statLabel}>Total Equity</Text>
-                </View>
-
-                <View style={styles.statCard}>
-                  <View style={styles.statIconContainer}>
-                    <MaterialCommunityIcons
-                      name="trending-up"
-                      size={24}
-                      color={THEME.colors.primary}
-                    />
-                  </View>
-                  <Text
-                    style={[styles.statValue, { color: THEME.colors.primary }]}
-                  >
-                    +€{profile?.dailyProfit.toFixed(2)}
-                  </Text>
-                  <Text style={styles.statLabel}>Daily Profit</Text>
-                </View>
-
-                <View style={styles.statCard}>
-                  <View style={styles.statIconContainer}>
-                    <MaterialCommunityIcons
-                      name="chart-line"
-                      size={24}
-                      color={THEME.colors.secondary}
-                    />
-                  </View>
-                  <Text style={styles.statValue}>{profile?.totalTrades}</Text>
-                  <Text style={styles.statLabel}>Total Trades</Text>
-                </View>
-              </View>
-            </View>
-
-            {/* ACCOUNT INFO */}
-            <View style={styles.infoCard}>
-              <View style={styles.infoHeader}>
-                <Ionicons
-                  name="person"
-                  size={20}
-                  color={THEME.colors.primary}
-                />
-                <Text style={styles.infoTitle}>Account Information</Text>
-              </View>
-
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>User ID</Text>
-                <Text style={styles.infoValue}>{user.id}</Text>
-              </View>
-
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Email</Text>
-                <Text style={styles.infoValue}>{user.email}</Text>
-              </View>
-
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Account Type</Text>
-                <View style={styles.roleBadge}>
-                  <Text style={styles.roleText}>{user.role}</Text>
-                </View>
-              </View>
-
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Member Since</Text>
-                <Text style={styles.infoValue}>
-                  {formatDate(user.dateOfCreation)}
-                </Text>
-              </View>
-            </View>
-
-            {/* SETTINGS */}
-            <View style={styles.settingsCard}>
-              <Text style={styles.sectionTitle}>Settings</Text>
-
-              <TouchableOpacity style={styles.settingItem}>
-                <View style={styles.settingLeft}>
-                  <Ionicons
-                    name="shield-checkmark"
-                    size={20}
-                    color={THEME.colors.foreground}
-                  />
-                  <Text style={styles.settingText}>Security</Text>
-                </View>
-                <Ionicons
-                  name="chevron-forward"
-                  size={20}
-                  color={THEME.colors.mutedForeground}
-                />
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.settingItem}>
-                <View style={styles.settingLeft}>
-                  <Ionicons
-                    name="notifications"
-                    size={20}
-                    color={THEME.colors.foreground}
-                  />
-                  <Text style={styles.settingText}>Notifications</Text>
-                </View>
-                <Ionicons
-                  name="chevron-forward"
-                  size={20}
-                  color={THEME.colors.mutedForeground}
-                />
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.settingItem}>
-                <View style={styles.settingLeft}>
-                  <Ionicons
-                    name="help-circle"
-                    size={20}
-                    color={THEME.colors.foreground}
-                  />
-                  <Text style={styles.settingText}>Help & Support</Text>
-                </View>
-                <Ionicons
-                  name="chevron-forward"
-                  size={20}
-                  color={THEME.colors.mutedForeground}
-                />
-              </TouchableOpacity>
-            </View>
-
-            {/* LOGOUT BUTTON */}
-            <TouchableOpacity
-              style={styles.logoutButton}
-              onPress={handleLogout}
-            >
-              <Ionicons
-                name="log-out"
-                size={20}
-                color={THEME.colors.destructive}
-              />
-              <Text style={styles.logoutText}>Logout</Text>
-            </TouchableOpacity>
-          </>
-        )}
-      </ScrollView>
-    </SafeAreaView>
+        {name}
+      </Text>
+    </View>
   );
 }
-//   const [selectedTrait, setSelectedTrait] = useState<any>(null);
-//   const [showEnneagramModal, setShowEnneagramModal] = useState(false);
-//   const screenWidth = Dimensions.get("window").width;
 
-//   if (!user) return null;
+interface GalleryPicProps {
+  source: string;
+  profile: any;
+  onPress?: () => void;
+}
 
-//   const getCountryFlag = (code: string) => {
-//     const country = COUNTRIES.find((c) => c.code === code);
-//     return country ? country.flag : "🌍";
-//   };
+function GalleryPic({ source, profile, onPress }: GalleryPicProps) {
+  const navigation = useNavigation();
 
-//   const formatBirthDate = (date: Date) => {
-//     return new Date(date).toLocaleDateString("en-US", {
-//       year: "numeric",
-//       month: "long",
-//       day: "numeric",
-//     });
-//   };
+  return (
+    <TouchableOpacity onPress={onPress} style={styles.galleryPic}>
+      <Image source={{ uri: source }} style={styles.galleryPic} />
+    </TouchableOpacity>
+  );
+}
 
-//   const calculateAge = (birthDate: Date) => {
-//     const today = new Date();
-//     const birth = new Date(birthDate);
-//     let age = today.getFullYear() - birth.getFullYear();
-//     const monthDiff = today.getMonth() - birth.getMonth();
-//     if (
-//       monthDiff < 0 ||
-//       (monthDiff === 0 && today.getDate() < birth.getDate())
-//     ) {
-//       age--;
-//     }
-//     return age;
-//   };
+export function Profile() {
+  const route = useRoute();
+  const navigation = useNavigation();
 
-//   const [isFetching, setIsFetching] = useState(true);
-//   const [error, setError] = useState<string | null>(null);
-//   const [profile, setProfile] = useState<UserProfile | null>(null);
-//   const [numberOfSessions, setNumberOfSessions] = useState(0);
-//   const [numberOfEntriedInJournal, setNumberOfEntriesInJournal] = useState(0);
-//   const [howOld, setHowOld] = useState(0);
+  const profile = route.params as any;
 
-//   const fetchProfile = async () => {
-//     try {
-//       setError(null);
-//       setIsFetching(true);
-//       const res = await authService.getProfile();
-//       if (res) setProfile(res);
-//       const allSessions = await chatService.getHistory();
-//       if (allSessions) setNumberOfSessions(allSessions.length);
-//       const allentries = await chatService.getCalendarEntries();
-//       if (allentries) setNumberOfEntriesInJournal(allentries.length);
-//       const dateOfBirth = user.dateOfCreation;
-//       const today = new Date();
-//       const diff = today.getTime() - dateOfBirth.getTime();
-//       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-//       const months = Math.floor(days / 30);
-//       const years = Math.floor(months / 12);
-//       setHowOld(years);
-//     } catch (error) {
-//       setError("Failed to load profile data");
-//       console.error("Failed to fetch profile:", error);
-//     } finally {
-//       setIsFetching(false);
-//     }
-//   };
+  const [readMoreEnabled, setReadMoreEnabled] = useState<boolean>(false);
+  const [imageViewVisible, setImageViewVisible] = useState<number>(-1);
 
-//   // Add error handling UI
-//   {
-//     error && (
-//       <View style={styles.errorContainer}>
-//         <Text style={styles.errorText}>{error}</Text>
-//         <TouchableOpacity style={styles.retryButton} onPress={fetchProfile}>
-//           <Text style={styles.retryText}>Retry</Text>
-//         </TouchableOpacity>
-//       </View>
-//     );
-//   }
+  const viewImage = (index: number) => {
+    setImageViewVisible(index);
+  };
 
-//   useFocusEffect(
-//     React.useCallback(() => {
-//       console.log("Fetching profile...");
-//       fetchProfile();
-//     }, [])
-//   );
+  profile.about =
+    "Lorem ipsum dolor sit amet consectetur adipisicing elit. Odit ipsam et quisquam, quis, sequi voluptas distinctio reprehenderit quas adipisci nihil hic accusamus sit praesentium consequatur ad quo exercitationem omnis fugiat.";
 
-//   console.log(profile);
+  return (
+    <Background>
+      <MyStatusBar
+        backgroundColor="transparent"
+        barStyle="light-content"
+        translucent
+      />
+      <View style={{ flex: 1 }}>
+        <ImageView
+          images={profile.pics.map((pic: string) => ({ uri: pic }))}
+          imageIndex={imageViewVisible}
+          visible={imageViewVisible >= 0}
+          onRequestClose={() => setImageViewVisible(-1)}
+        />
+        <ScrollView style={{ flex: 1 }}>
+          <View style={styles.pic}>
+            <Image source={{ uri: profile.pics[0] }} style={styles.pic} />
+            <TouchableOpacity
+              style={styles.goback}
+              onPress={() => navigation.goBack()}
+            >
+              <Image source={GoBackIcon} />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.informationContainer}>
+            <View style={styles.infos}>
+              <DecisionButtons />
+              <View style={styles.nameAndCourseContainer}>
+                <View style={styles.nameAndCourse}>
+                  <Text style={styles.profilename}>
+                    {profile.name.first} {profile.name.last}, {profile.dob.age}
+                  </Text>
+                  <Text style={styles.text}>Style enthusiast</Text>
+                </View>
+                <TouchableOpacity style={styles.dmBtn} onPress={() => {}}>
+                  <Image source={DirectMessage} />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.locationContainer}>
+                <View style={styles.nameAndCourse}>
+                  <Text style={styles.label}>Based in</Text>
+                  <Text style={styles.text}>Porto, Portugal</Text>
+                </View>
+                <View style={styles.distance}>
+                  <View>
+                    <Image source={DistanceIcon} style={styles.distanceIcon} />
+                  </View>
+                  <Text style={styles.distanceText}>7 km</Text>
+                </View>
+              </View>
+              <View style={styles.simpleContainer}>
+                <Text style={styles.label}>About</Text>
+                <Text style={styles.text}>
+                  {profile.about.length > 100 && !readMoreEnabled
+                    ? profile.about.substring(0, 100) + "..."
+                    : profile.about}
+                </Text>
+                {profile.about.length > 100 && (
+                  <TouchableOpacity
+                    onPress={() => setReadMoreEnabled(!readMoreEnabled)}
+                  >
+                    <Text style={styles.readMore}>
+                      {profile.about.length > 100 && !readMoreEnabled
+                        ? "Read more"
+                        : "Read less"}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+              <View style={styles.simpleContainer}>
+                <Text style={styles.label}>Style</Text>
+                <View style={styles.interests}>
+                  <Intersest name="Minimalist" checked={true} />
+                  <Intersest name="Streetwear" checked={true} />
+                  <Intersest name="Casual" checked={false} />
+                  <Intersest name="Vintage" checked={false} />
+                  <Intersest name="Sporty" checked={false} />
+                </View>
+              </View>
+              <View style={styles.simpleContainer}>
+                <Text style={styles.label}>Gallery</Text>
+                <View style={styles.gallery}>
+                  <View
+                    style={[
+                      styles.galleryRow,
+                      {
+                        height: "65%",
+                      },
+                    ]}
+                  >
+                    <GalleryPic
+                      onPress={() => viewImage(0)}
+                      profile={profile}
+                      source={profile.pics[0]}
+                    />
+                    <GalleryPic
+                      onPress={() => viewImage(1)}
+                      profile={profile}
+                      source={profile.pics[1]}
+                    />
+                  </View>
+                  <View
+                    style={[
+                      styles.galleryRow,
+                      {
+                        height: "35%",
+                      },
+                    ]}
+                  >
+                    <GalleryPic
+                      onPress={() => viewImage(2)}
+                      profile={profile}
+                      source={profile.pics[2]}
+                    />
 
-//   const handleTraitPress = (trait: any) => {
-//     setSelectedTrait(trait);
-//   };
+                    <GalleryPic
+                      onPress={() => viewImage(3)}
+                      profile={profile}
+                      source={profile.pics[3]}
+                    />
 
-//   return (
-//     <SafeAreaView style={styles.container}>
-//       <ScrollView style={styles.scrollView}>
-//         {/* USER HEADER */}
-//         <View style={styles.header}>
-//           <View style={styles.avatarContainer}>
-//             <View style={styles.avatar}>
-//               <Text style={styles.avatarText}>
-//                 {user.completeName.charAt(0).toUpperCase()}
-//               </Text>
-//             </View>
-//             <View style={styles.nationalityBadge}>
-//               <Text style={styles.nationalityText}>
-//                 {getCountryFlag(user.nationality)}
-//               </Text>
-//             </View>
-//           </View>
-//           <Text style={styles.name}>{user.completeName}</Text>
-//           <Text style={styles.email}>{user.email}</Text>
-//         </View>
-
-//         {/* PERSONAL INFO CARD */}
-//         <View style={styles.infoCard}>
-//           <View style={styles.infoSection}>
-//             <View style={styles.infoHeader}>
-//               <Ionicons name="person" size={24} color={THEME.colors.primary} />
-//               <Text style={styles.infoTitle}>Personal Information</Text>
-//             </View>
-
-//             <View style={styles.infoRow}>
-//               <Text style={styles.infoLabel}>Age</Text>
-//               <Text style={styles.infoValue}>
-//                 {calculateAge(user.birthDate)} years old
-//               </Text>
-//             </View>
-
-//             <View style={styles.infoRow}>
-//               <Text style={styles.infoLabel}>Birth Date</Text>
-//               <Text style={styles.infoValue}>
-//                 {formatBirthDate(user.birthDate)}
-//               </Text>
-//             </View>
-
-//             <View style={styles.infoRow}>
-//               <Text style={styles.infoLabel}>Occupation</Text>
-//               <Text style={styles.infoValue}>{user.occupation}</Text>
-//             </View>
-
-//             <View style={styles.infoRow}>
-//               <Text style={styles.infoLabel}>Nationality</Text>
-//               <Text style={styles.infoValue}>
-//                 {getCountryFlag(user.nationality)}{" "}
-//                 {COUNTRIES.find((c) => c.code === user.nationality)?.name}
-//               </Text>
-//             </View>
-//           </View>
-//         </View>
-
-//         {isFetching ? (
-//           <EvaluationSkeleton />
-//         ) : (
-//           <View style={styles.evaluationCard}>
-//             <View style={styles.evaluationHeader}>
-//               <Ionicons name="medal" size={24} color={THEME.colors.primary} />
-//               <Text style={styles.evaluationTitle}>Global Evaluation</Text>
-//             </View>
-//             <Text style={styles.evaluationText}>{profile?.evaluation}</Text>
-//           </View>
-//         )}
-
-//         {/* ENNEAGRAM SECTION */}
-//         {!isFetching ? (
-//           <TouchableOpacity
-//             style={styles.enneagramCard}
-//             onPress={() => setShowEnneagramModal(true)}
-//           >
-//             <View style={styles.enneagramContent}>
-//               <View style={styles.enneagramTextContainer}>
-//                 <Text style={styles.enneagramTitle}>
-//                   Type {profile?.eneagrama.type}
-//                 </Text>
-//                 <Text style={styles.enneagramSub}>
-//                   Tap for more information
-//                 </Text>
-//               </View>
-//               <Ionicons
-//                 name="chevron-forward"
-//                 size={20}
-//                 color={THEME.colors.mutedForeground}
-//               />
-//             </View>
-//           </TouchableOpacity>
-//         ) : (
-//           <EnneagramSkeleton />
-//         )}
-
-//         {/* USER STATS */}
-//         <View style={styles.statsContainer}>
-//           <View style={styles.statCard}>
-//             <Ionicons
-//               name="chatbubble"
-//               size={24}
-//               color={THEME.colors.primary}
-//             />
-//             <Text style={styles.statNumber}>{numberOfSessions}</Text>
-//             <Text style={styles.statLabel}>Sessions</Text>
-//           </View>
-
-//           <View style={styles.statCard}>
-//             <Ionicons name="star" size={24} color={THEME.colors.primary} />
-//             <Text style={styles.statNumber}>{numberOfEntriedInJournal}</Text>
-//             <Text style={styles.statLabel}>Entries</Text>
-//           </View>
-//         </View>
-
-//         {/* BIG FIVE RADAR CHART */}
-//         {isFetching ? (
-//           <LoadingSpinner />
-//         ) : (
-//           <View style={styles.personalityCard}>
-//             <View style={styles.infoHeader}>
-//               <Ionicons
-//                 name="analytics"
-//                 size={24}
-//                 color={THEME.colors.primary}
-//               />
-//               <Text style={styles.infoTitle}>Personality Insights</Text>
-//             </View>
-
-//             <View style={styles.chartContainer}>
-//               <RadarChart
-//                 data={
-//                   profile?.ocean
-//                     ? Object.values(profile.ocean).map((trait) => ({
-//                         label: trait.label,
-//                         value: trait.value,
-//                       }))
-//                     : []
-//                 }
-//                 size={screenWidth - 80}
-//                 maxValue={100}
-//                 scale={0.9}
-//                 fillColor={THEME.colors.background}
-//                 gradientColor={{
-//                   startColor: THEME.colors.primary,
-//                   endColor: THEME.colors.background,
-//                   count: 5,
-//                 }}
-//                 stroke={[
-//                   THEME.colors.border,
-//                   THEME.colors.border,
-//                   THEME.colors.border,
-//                   THEME.colors.border,
-//                   THEME.colors.primary,
-//                 ]}
-//                 strokeWidth={[0.5, 0.5, 0.5, 0.5, 1.5]}
-//                 strokeOpacity={[0.3, 0.3, 0.3, 0.3, 0.2]}
-//                 labelSize={14}
-//                 labelColor={THEME.colors.mutedForeground}
-//                 labelDistance={1.2}
-//                 dataFillColor={THEME.colors.primary}
-//                 dataFillOpacity={0.15}
-//                 dataStroke={THEME.colors.primary}
-//                 dataStrokeWidth={2}
-//                 dataStrokeOpacity={0.8}
-//                 divisionStroke={THEME.colors.border}
-//                 divisionStrokeWidth={1}
-//                 divisionStrokeOpacity={0.3}
-//                 isCircle
-//               />
-//             </View>
-
-//             <Text style={styles.chartHelper}>
-//               Tap on any trait to learn more about your personality profile
-//             </Text>
-
-//             <View style={styles.traitsLegend}>
-//               {profile ? (
-//                 Object.values(profile.ocean).map((trait, index) => (
-//                   <TouchableOpacity
-//                     key={trait.label}
-//                     style={styles.traitItem}
-//                     onPress={() => handleTraitPress(trait)}
-//                   >
-//                     <View style={styles.traitScore}>
-//                       <Text style={styles.traitScoreText}>{trait.value}%</Text>
-//                     </View>
-//                     <Text style={styles.traitLabel}>{trait.label}</Text>
-//                   </TouchableOpacity>
-//                 ))
-//               ) : (
-//                 <LoadingSpinner />
-//               )}
-//             </View>
-//           </View>
-//         )}
-//         {/* ACTION BUTTONS */}
-//         <View style={styles.actionButtons}>
-//           <TouchableOpacity
-//             onPress={async () => {
-//               const url = await authService.getPdfCompleteUrl();
-//               await WebBrowser.openBrowserAsync(url);
-//             }}
-//             style={styles.downloadButton}
-//           >
-//             <Ionicons
-//               name="document-text"
-//               size={20}
-//               color={THEME.colors.primaryForeground}
-//             />
-//             <Text style={styles.downloadText}>Download Medical Record</Text>
-//           </TouchableOpacity>
-//           <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-//             <Ionicons
-//               name="log-out"
-//               size={20}
-//               color={THEME.colors.destructiveForeground}
-//             />
-//             <Text style={styles.logoutText}>Logout</Text>
-//           </TouchableOpacity>
-//         </View>
-
-//         {/* Big Five Trait Modal */}
-//         <Modal
-//           isVisible={selectedTrait !== null}
-//           onBackdropPress={() => setSelectedTrait(null)}
-//           backdropOpacity={0.4}
-//           animationIn="fadeIn"
-//           animationOut="fadeOut"
-//           style={styles.modal}
-//         >
-//           <View style={styles.modalContent}>
-//             <View style={styles.modalHeader}>
-//               <Text style={styles.modalTitle}>{selectedTrait?.label}</Text>
-//               <TouchableOpacity
-//                 onPress={() => setSelectedTrait(null)}
-//                 style={styles.modalClose}
-//               >
-//                 <Ionicons
-//                   name="close"
-//                   size={24}
-//                   color={THEME.colors.mutedForeground}
-//                 />
-//               </TouchableOpacity>
-//             </View>
-//             <View style={styles.modalScoreContainer}>
-//               <Text style={styles.modalScoreLabel}>Score</Text>
-//               <Text style={styles.modalScoreValue}>
-//                 {selectedTrait?.value}%
-//               </Text>
-//             </View>
-//             <Text style={styles.modalDescription}>
-//               {selectedTrait?.description}
-//             </Text>
-//           </View>
-//         </Modal>
-
-//         {/* Enneagram Modal */}
-//         <Modal
-//           isVisible={showEnneagramModal}
-//           onBackdropPress={() => setShowEnneagramModal(false)}
-//           backdropOpacity={0.4}
-//           animationIn="fadeIn"
-//           animationOut="fadeOut"
-//           style={styles.modal}
-//         >
-//           <View style={styles.modalContent}>
-//             <View style={styles.modalHeader}>
-//               <Text style={styles.modalTitle}>
-//                 Enneagram Type {profile?.eneagrama.type}
-//               </Text>
-//               <TouchableOpacity
-//                 onPress={() => setShowEnneagramModal(false)}
-//                 style={styles.modalClose}
-//               >
-//                 <Ionicons
-//                   name="close"
-//                   size={24}
-//                   color={THEME.colors.mutedForeground}
-//                 />
-//               </TouchableOpacity>
-//             </View>
-//             <View style={styles.modalScoreContainer}>
-//               <Text style={styles.modalScoreLabel}>Details</Text>
-//             </View>
-//             <Text style={styles.modalDescription}>
-//               {profile?.eneagrama.description}
-//             </Text>
-//           </View>
-//         </Modal>
-//       </ScrollView>
-//     </SafeAreaView>
-//   );
-// }
+                    <GalleryPic
+                      onPress={() => viewImage(4)}
+                      profile={profile}
+                      source={profile.pics[4]}
+                    />
+                  </View>
+                </View>
+              </View>
+            </View>
+          </View>
+        </ScrollView>
+      </View>
+    </Background>
+  );
+}

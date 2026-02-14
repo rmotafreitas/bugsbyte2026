@@ -8,7 +8,7 @@ export function App() {
   return (
     <NavigationContainer>
       <AuthProvider>
-        <MyStatusBar backgroundColor={THEME.colors.primary} />
+        <MyStatusBar backgroundColor={THEME.COLORS.PRIMARY} />
         <AppNavigator />
       </AuthProvider>
     </NavigationContainer>
