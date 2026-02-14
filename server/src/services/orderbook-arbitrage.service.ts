@@ -374,9 +374,7 @@ export class OrderBookArbitrageService {
    * Compares best bid/ask across exchanges using tickers (much faster than order books)
    * Shows gross spread + multiple fee scenarios (maker vs taker)
    */
-  async tickerSpreadScan(
-    symbols: string[],
-  ): Promise<TickerSpreadScanResult> {
+  async tickerSpreadScan(symbols: string[]): Promise<TickerSpreadScanResult> {
     const startTime = Date.now();
     const results: TickerSpreadResult[] = [];
 
@@ -491,26 +489,22 @@ export class OrderBookArbitrageService {
         // Buy at the ask on buyFrom exchange, sell at the bid on sellTo exchange
         const buyPrice = buyFrom.ask;
         const sellPrice = sellTo.bid;
-        const grossSpreadPercent =
-          ((sellPrice - buyPrice) / buyPrice) * 100;
+        const grossSpreadPercent = ((sellPrice - buyPrice) / buyPrice) * 100;
 
         // Scenario 1: Both maker fees (limit orders on both sides)
         const makerBuyFee = buyPrice * buyFrom.makerFee;
         const makerSellFee = sellPrice * sellTo.makerFee;
-        const makerTotalFeePercent =
-          (buyFrom.makerFee + sellTo.makerFee) * 100;
+        const makerTotalFeePercent = (buyFrom.makerFee + sellTo.makerFee) * 100;
         const makerNetPercent = grossSpreadPercent - makerTotalFeePercent;
 
         // Scenario 2: Both taker fees (market orders)
         const takerBuyFee = buyPrice * buyFrom.takerFee;
         const takerSellFee = sellPrice * sellTo.takerFee;
-        const takerTotalFeePercent =
-          (buyFrom.takerFee + sellTo.takerFee) * 100;
+        const takerTotalFeePercent = (buyFrom.takerFee + sellTo.takerFee) * 100;
         const takerNetPercent = grossSpreadPercent - takerTotalFeePercent;
 
         // Scenario 3: Maker buy (limit) + Taker sell (market) - most realistic
-        const hybridFeePercent =
-          (buyFrom.makerFee + sellTo.takerFee) * 100;
+        const hybridFeePercent = (buyFrom.makerFee + sellTo.takerFee) * 100;
         const hybridNetPercent = grossSpreadPercent - hybridFeePercent;
 
         spreads.push({
