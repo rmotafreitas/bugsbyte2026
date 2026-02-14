@@ -10,6 +10,7 @@ import { authRoutes } from "./routes/auth/auth";
 import { meUserRoute } from "./routes/auth/me";
 import { updateUserRoute } from "./routes/auth/update";
 import { logoutUserRoute } from "./routes/auth/logout";
+import { arbitrageRoute } from "./routes/arbitrage/arbitrage";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -87,6 +88,9 @@ app.register(meUserRoute);
 app.register(updateUserRoute);
 app.register(logoutUserRoute);
 
+// Arbitrage routes
+app.register(arbitrageRoute);
+
 // Static files
 app.register(fastifystatic, {
   root: path.join(__dirname, "..", "uploads"),
@@ -106,4 +110,6 @@ app
     console.log(`   POST ${address}/auth/login`);
     console.log(`   GET  ${address}/auth/me`);
     console.log(`   GET  ${address}/secure`);
+    console.log(`   GET  ${address}/api/arbitrage/btc`);
+    console.log(`   GET  ${address}/api/arbitrage/exchanges`);
   });
