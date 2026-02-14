@@ -13,6 +13,7 @@ import { logoutUserRoute } from "./routes/auth/logout";
 import { arbitrageRoute } from "./routes/arbitrage/arbitrage";
 import { orderBookArbitrageRoute } from "./routes/arbitrage/orderbook-arbitrage";
 import { exchangesInfoRoute } from "./routes/exchanges/exchanges-info";
+import { balanceRoute } from "./routes/balance/balance";
 import { registerSwagger } from "./lib/swagger";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -117,6 +118,9 @@ app.register(logoutUserRoute);
 // Exchange info routes (public)
 app.register(exchangesInfoRoute);
 
+// Balance / Wallet routes
+app.register(balanceRoute);
+
 // Arbitrage routes
 app.register(arbitrageRoute);
 app.register(orderBookArbitrageRoute);
@@ -148,7 +152,14 @@ app
     console.log(`\n   📈 Arbitrage (ticker):`);
     console.log(`   GET  ${address}/api/arbitrage/btc`);
     console.log(`   GET  ${address}/api/arbitrage/exchanges`);
-    console.log(`\n   📊 Order Book Arbitrage (Spread Hunters):`);
+    console.log(`\n   � Balance / Wallet:`);
+    console.log(`   GET  ${address}/api/balance`);
+    console.log(`   POST ${address}/api/balance/deposit`);
+    console.log(`   POST ${address}/api/balance/withdraw`);
+    console.log(`   GET  ${address}/api/balance/transactions`);
+    console.log(`   GET  ${address}/api/balance/trades`);
+    console.log(`   POST ${address}/api/balance/trade`);
+    console.log(`\n   �📊 Order Book Arbitrage (Spread Hunters):`);
     console.log(`   GET  ${address}/api/orderbook-arbitrage/analyze`);
     console.log(`   POST ${address}/api/orderbook-arbitrage/simulate`);
     console.log(`   GET  ${address}/api/orderbook-arbitrage/history`);

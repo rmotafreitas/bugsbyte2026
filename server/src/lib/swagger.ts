@@ -223,6 +223,11 @@ export async function registerSwagger(app: FastifyInstance) {
           description:
             "Profit & Loss tracking, trade history, and performance statistics",
         },
+        {
+          name: "Balance",
+          description:
+            "User wallet management: deposits, withdrawals, trade execution with balance, and financial summaries",
+        },
       ],
       components: {
         securitySchemes: {
