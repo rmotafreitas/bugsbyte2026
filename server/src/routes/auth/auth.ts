@@ -58,7 +58,7 @@ export const authRoutes = async (app: FastifyInstance) => {
     reply.setCookie("access_token", token, {
       path: "/",
       httpOnly: true,
-      secure: true,
+      secure: false,
     });
 
     return reply.status(201).send({
@@ -107,7 +107,7 @@ export const authRoutes = async (app: FastifyInstance) => {
     reply.setCookie("access_token", token, {
       path: "/",
       httpOnly: true,
-      secure: true,
+      secure: false,
     });
 
     return reply.send({
